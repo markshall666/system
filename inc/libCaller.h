@@ -10,6 +10,7 @@ class LibCaller
   std::map<int, CallbackObj*> objMap;
   int mapIter;
   char* appName;
+  int fd;
   public:
   LibCaller(const char* _appName);
 
@@ -18,7 +19,7 @@ class LibCaller
   }
   bool dispatch();
   bool registerObj(CallbackObj* _obj);
-  void init();
+  bool init();
   int getEventDescriptor();
 };
 
