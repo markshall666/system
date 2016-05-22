@@ -3,6 +3,7 @@
 #include "callbackObj.h"
 #include "myCallbackObj.h"
 #include <iostream>
+#include <poll.h>
 
 using namespace std;
 
@@ -16,13 +17,24 @@ int main()
    cout << "Registered successful\n";
   }
   
-  caller->init();  
-
-  if (caller->dispatch())
+  if (caller->init())
   {
-   cout << "Dispatch returned true\n";
+	  cout << "Init ok\n";
   }
-  //while(1);
 
+  struct pollfd fds;
+  fds.fd = caller->getEventDescriptor();
+  fds.events = POLLIN;
+  while(1)
+  {
+	poll(&fds, 1, -1);
+	if (fds.revents == POLLIN)
+	{
+		if (caller->dispatch())
+		{
+		  cout << "Dispatch returned true\n";
+		}
+	}
+  }
   return 0;
 }
