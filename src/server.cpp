@@ -2,28 +2,38 @@
 #include <stdlib.h>
 #include <string.h>
 #include "itc.h"
+#include "messages.h"
 
 #define NAME "tranServer"
 
 int main()
 { 
   int fd;
-  void* buf = malloc(8);
+  void* buf = malloc(16);
+  char* client = (char*)malloc(16);
+
   if (!initItc(NAME, &fd))
   {
     return 0;
   }
-  int numBytes = receiveData(fd, buf);
-  printf("received init from %s\n", (const char*)buf);
-  char* client = (char*)malloc(numBytes);
-  strcpy(client,(const char*)buf);
-  const char* message = "initOk";
-  sendData(fd, client, (void*)message, 6);
+  union itcMsg* msg = receiveData(fd);
+  itcPrintMsg(msg);
+  if (msg->msgNo == REGISTER_APP_REQ)
+  {
+	  strcpy(client, msg->registerAppReq.appName);
+	  itcFree(msg);
+	  union itcMsg* msg = itcAlloc(sizeof(RegisterAppCfmS), 0x66600002);
+	  msg->registerAppCfm.result = true;
+	  strcpy(msg->registerAppReq.appName, client);
+	  sendData(fd, client, msg);
+  }
 
   while(1)
   {
-	  fgets((char*)buf, 8, stdin);
-	  sendData(fd, client, buf, 8);
+	  fgets((char*)buf, 16, stdin);
+	  union itcMsg* msg = itcAlloc(sizeof(DispatchAppS), DISPATCH_APP);
+	  strcpy(msg->dispatchApp.message, (char*)buf);
+	  sendData(fd, client, msg);
   }
   terminateItc(fd);
 }

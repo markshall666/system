@@ -5,6 +5,8 @@
 #include "iostream"
 #include <map>
 
+#define TRAN_SERVER "tranServer"
+
 class LibCaller
 {
   std::map<int, CallbackObj*> objMap;

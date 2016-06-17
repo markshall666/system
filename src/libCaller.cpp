@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "itc.h"
+#include "messages.h"
 
 
 
@@ -25,25 +26,29 @@ bool LibCaller::registerObj(CallbackObj* obj)
 bool LibCaller::init()
 {
   printf("Init called\n");
+  bool result = false;
+
   if (!initItc(appName, &fd))
   {
 	  return false;
   }
-  int numBytes = strlen(appName);
-  sendData(fd, "tranServer", appName, numBytes);
 
-  void* buf = malloc(8);
-  numBytes = receiveData(fd, buf);
-  printf("received %d bytes %s\n", numBytes, (char*)buf);
+  union itcMsg* msg = itcAlloc(sizeof(RegisterAppReqS), REGISTER_APP_REQ);
+  msg->msgNo = REGISTER_APP_REQ;
+  strcpy(msg->registerAppReq.appName, appName);
+  itcPrintMsg(msg);
+  sendData(fd, TRAN_SERVER, msg);
 
-  if (!strcmp((char*)buf, "initOk"))
+  msg = receiveData(fd);
+  itcPrintMsg(msg);
+
+  if (msg->registerAppCfm.result)
   {
-	  return true;
+	  result = true;
   }
-  else
-  {
-	  return false;
-  }
+  itcFree(msg);
+
+  return result;
 }
 
 int LibCaller::getEventDescriptor()
@@ -53,8 +58,9 @@ int LibCaller::getEventDescriptor()
 
 bool LibCaller::dispatch()
 {
-	void* buf = malloc(8);
-    int numBytes = receiveData(fd, buf);
-	const char* message = (const char*)buf;
-    return objMap[1]->onCall(message);
+    union itcMsg* msg = receiveData(fd);
+    itcPrintMsg(msg);
+    objMap[1]->onCall(msg->dispatchApp.message);
+    itcFree(msg);
+    return true;
 }
