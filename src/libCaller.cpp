@@ -11,7 +11,7 @@
 using namespace std;
 
 LibCaller::LibCaller(const char* _appName)
-  :mapIter(0),fd(0)
+  :mapIter(0),itcId(0)
 {
   appName = (char*)_appName;
 }
@@ -28,7 +28,7 @@ bool LibCaller::init()
   printf("Init called\n");
   bool result = false;
 
-  if (!initItc(appName, &fd))
+  if (!initItc(appName, &itcId))
   {
 	  return false;
   }
@@ -37,9 +37,9 @@ bool LibCaller::init()
   msg->msgNo = REGISTER_APP_REQ;
   strcpy(msg->registerAppReq.appName, appName);
   itcPrintMsg(msg);
-  sendData(fd, TRAN_SERVER, msg);
+  sendData(itcId, TRAN_SERVER, msg);
 
-  msg = receiveData(fd);
+  msg = receiveData(itcId);
   itcPrintMsg(msg);
 
   if (msg->registerAppCfm.result)
@@ -53,12 +53,12 @@ bool LibCaller::init()
 
 int LibCaller::getEventDescriptor()
 {
-	return fd;
+	return itcId;
 }
 
 bool LibCaller::dispatch()
 {
-    union itcMsg* msg = receiveData(fd);
+    union itcMsg* msg = receiveData(itcId);
     itcPrintMsg(msg);
     objMap[1]->onCall(msg->dispatchApp.message);
     itcFree(msg);
