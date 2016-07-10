@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include "itc.h"
@@ -75,7 +76,7 @@ bool sendData(int sender, const char* receiver, union itcMsg* msg)
 
 union itcMsg* receiveData()
 {
-  struct threadData* thDataPtr = getThreadDataPtr();
+  struct threadData* thDataPtr = getThreadDataPtr(0);
   memset(thDataPtr->buf, 0, ITC_MAX_MSG_SIZE);
   uint32_t recBytes = recv(thDataPtr->fd, thDataPtr->buf, ITC_MAX_MSG_SIZE, 0);
   void* buf = malloc(recBytes);

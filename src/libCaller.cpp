@@ -3,10 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "itc.h"
 #include "messages.h"
 
-
+extern "C"
+{
+	#include "itc.h"
+}
 
 using namespace std;
 

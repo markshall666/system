@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "itc.h"
 #include "messages.h"
+
+extern "C"
+{
+	#include "itc.h"
+}
 
 #define NAME "tranServer"
 

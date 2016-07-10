@@ -2,7 +2,7 @@
 #define ITC_H
 
 #include <stdint.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <pthread.h>
 
 #define ITC_MAX_MSG_SIZE 1024
@@ -24,6 +24,8 @@ struct threadData
 	void* buf;
 };
 
+union itcMsg;
+
 
 bool initItc(const char* name, int* fd);
 
@@ -41,6 +43,6 @@ void itcFree(union itcMsg* msg);
 
 struct internalMsg* getInternalMsg(union itcMsg* msg);
 
-struct threadData* getThreadDataPtr(int sock = 0);
+struct threadData* getThreadDataPtr(int sock);
 
 #endif
