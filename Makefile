@@ -13,5 +13,8 @@ app:
 	g++ -o main main.o myCallbackObj.o -L. extLib.so.1.0.1
 server:
 	g++ -o callServer src/server.cpp src/itc.cpp -Iinc -pthread
+itc:
+	gcc -fPIC -c src/itc.c -Iinc
+	gcc -shared -pthread -Wl,-soname,itc.so.1 -o itc.so.1.0.1 itc.o
 clean:
 	rm -f *.o

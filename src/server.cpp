@@ -16,7 +16,7 @@ int main()
   {
     return 0;
   }
-  union itcMsg* msg = receiveData(fd);
+  union itcMsg* msg = receiveData();
   itcPrintMsg(msg);
   if (msg->msgNo == REGISTER_APP_REQ)
   {

@@ -39,7 +39,7 @@ bool LibCaller::init()
   itcPrintMsg(msg);
   sendData(itcId, TRAN_SERVER, msg);
 
-  msg = receiveData(itcId);
+  msg = receiveData();
   itcPrintMsg(msg);
 
   if (msg->registerAppCfm.result)
@@ -58,7 +58,7 @@ int LibCaller::getEventDescriptor()
 
 bool LibCaller::dispatch()
 {
-    union itcMsg* msg = receiveData(itcId);
+    union itcMsg* msg = receiveData();
     itcPrintMsg(msg);
     objMap[1]->onCall(msg->dispatchApp.message);
     itcFree(msg);

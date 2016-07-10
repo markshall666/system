@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "itc.h"
 
 struct threadData** threadDataPtr = NULL;
@@ -72,11 +73,11 @@ bool sendData(int sender, const char* receiver, union itcMsg* msg)
   return true;
 }
 
-union itcMsg* receiveData(int sock)
+union itcMsg* receiveData()
 {
-  struct threadData* thDataPtr = getThreadDataPtr(sock);
+  struct threadData* thDataPtr = getThreadDataPtr();
   memset(thDataPtr->buf, 0, ITC_MAX_MSG_SIZE);
-  uint32_t recBytes = recv(sock, thDataPtr->buf, ITC_MAX_MSG_SIZE, 0);
+  uint32_t recBytes = recv(thDataPtr->fd, thDataPtr->buf, ITC_MAX_MSG_SIZE, 0);
   void* buf = malloc(recBytes);
   memcpy(buf, thDataPtr->buf, recBytes);
   struct internalMsg* msgPtr;
@@ -133,9 +134,20 @@ struct internalMsg* getInternalMsg(union itcMsg* msg)
 struct threadData* getThreadDataPtr(int sock)
 {
 	uint32_t index = 0;
-	while (threadDataPtr[index]->fd != sock)
+	if (!sock)
 	{
-		++index;
+		pthread_t currentTId = pthread_self();
+		while (threadDataPtr[index]->tId != currentTId)
+			{
+				++index;
+			}
+	}
+	else
+	{
+		while (threadDataPtr[index]->fd != sock)
+		{
+			++index;
+		}
 	}
 	return threadDataPtr[index];
 }
