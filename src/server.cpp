@@ -2,11 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "messages.h"
-
-extern "C"
-{
-	#include "itc.h"
-}
+#include "itc.h"
 
 #define NAME "tranServer"
 
@@ -26,7 +22,7 @@ int main()
   {
 	  strcpy(client, msg->registerAppReq.appName);
 	  itcFree(msg);
-	  union itcMsg* msg = itcAlloc(sizeof(RegisterAppCfmS), 0x66600002);
+	  union itcMsg* msg = itcAlloc(sizeof(RegisterAppCfmS), REGISTER_APP_CFM);
 	  msg->registerAppCfm.result = true;
 	  strcpy(msg->registerAppReq.appName, client);
 	  sendData(fd, client, msg);

@@ -1,30 +1,14 @@
 #ifndef ITC_H
 #define ITC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
-//#include <stdbool.h>
+#include <stdbool.h>
 #include <pthread.h>
-
-#define ITC_MAX_MSG_SIZE 1024
-#define ITC_MESSAGE_HEADER 8
-#define MAX_NO_APP 16
-
-struct internalMsg
-{
-	uint32_t size;
-	uint32_t senderFd;
-	uint32_t msgNo;
-};
-
-struct threadData
-{
-	int fd;
-	char name[16];
-	pthread_t tId;
-	void* buf;
-};
-
-union itcMsg;
+#include "itc_internal.h"
 
 
 bool initItc(const char* name, int* fd);
@@ -41,8 +25,8 @@ void itcPrintMsg(union itcMsg* msg);
 
 void itcFree(union itcMsg* msg);
 
-struct internalMsg* getInternalMsg(union itcMsg* msg);
-
-struct threadData* getThreadDataPtr(int sock);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

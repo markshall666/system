@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "itc.h"
+#include "itc_internal.h"
 
-struct threadData** threadDataPtr = NULL;
 
 bool initItc(const char* name, int* fd)
 {
@@ -42,15 +42,17 @@ bool initItc(const char* name, int* fd)
   thread->tId = pthread_self();
   strcpy(thread->name, name);
   thread->buf = malloc(ITC_MAX_MSG_SIZE);
-  if (threadDataPtr == NULL)
+
+  struct threadData*** threadsData = getThreadsData();
+  if (*threadsData == NULL)
   {
-	threadDataPtr = (struct threadData**)malloc(sizeof(struct threadData*) * MAX_NO_APP);
+	*threadsData = (struct threadData**)malloc(sizeof(struct threadData*) * MAX_NO_APP);
 	for (uint32_t i = 0; i < MAX_NO_APP; ++i)
 	{
-	  threadDataPtr[i] = NULL;
+	  (*threadsData)[i] = NULL;
 	}
   }
-  threadDataPtr[noThd] = thread;
+  (*threadsData)[noThd] = thread;
   ++noThd;
   printf("no threads = %d\n", noThd); //debug
   printf("fd = %d, tId = 0x%x, name = %s\n", thread->fd, (uint32_t)thread->tId, thread->name); //debug
@@ -123,32 +125,4 @@ void itcPrintMsg(union itcMsg* msg)
 		printf("%02x ", bytes[i]);
 	}
 	printf("]\n");
-}
-
-struct internalMsg* getInternalMsg(union itcMsg* msg)
-{
-	uint32_t* msgPtr = (uint32_t*)msg;
-	struct internalMsg* intMsgPtr = NULL;
-	return (struct internalMsg*)(msgPtr - (&(intMsgPtr->msgNo) - &(intMsgPtr->size)));
-}
-
-struct threadData* getThreadDataPtr(int sock)
-{
-	uint32_t index = 0;
-	if (!sock)
-	{
-		pthread_t currentTId = pthread_self();
-		while (threadDataPtr[index]->tId != currentTId)
-			{
-				++index;
-			}
-	}
-	else
-	{
-		while (threadDataPtr[index]->fd != sock)
-		{
-			++index;
-		}
-	}
-	return threadDataPtr[index];
 }

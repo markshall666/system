@@ -4,11 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "messages.h"
-
-extern "C"
-{
-	#include "itc.h"
-}
+#include "itc.h"
 
 using namespace std;
 
@@ -36,7 +32,6 @@ bool LibCaller::init()
   }
 
   union itcMsg* msg = itcAlloc(sizeof(RegisterAppReqS), REGISTER_APP_REQ);
-  msg->msgNo = REGISTER_APP_REQ;
   strcpy(msg->registerAppReq.appName, appName);
   itcPrintMsg(msg);
   sendData(itcId, TRAN_SERVER, msg);
