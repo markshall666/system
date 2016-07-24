@@ -4,6 +4,9 @@
  *  Created on: 16-07-2016
  *      Author: marek
  */
+#include <pthread.h>
+#include <bits/pthreadtypes.h>
+#include <stdint.h>
 
 #ifndef ITC_INTERNAL_H_
 #define ITC_INTERNAL_H_
@@ -16,7 +19,7 @@
 struct internalMsg
 {
 	uint32_t size;
-	uint32_t senderFd;
+	uint32_t senderTId;
 	uint32_t msgNo;
 };
 

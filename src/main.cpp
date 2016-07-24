@@ -11,15 +11,25 @@ int main()
 {  
   const char* name = "kotek";
   LibCaller* caller = LibFactory::getInstance(name);
-  CallbackObj* obj = new MyCallbackObj();  
+  CallbackObj* obj = new MyCallbackObj();
   if (caller->registerObj(obj))
   {
    cout << "Registered successful\n";
   }
-  
+  else
+  {
+    LibFactory::releaseInstance();
+    return 0;
+  }
+
   if (caller->init())
   {
 	  cout << "Init ok\n";
+  }
+  else
+  {
+	  LibFactory::releaseInstance();
+	  return 0;
   }
 
   struct pollfd fds;
@@ -33,6 +43,12 @@ int main()
 		if (caller->dispatch())
 		{
 		  cout << "Dispatch returned true\n";
+		}
+		else
+		{
+		  cout << "exit application\n";
+		  LibFactory::releaseInstance();
+		  break;
 		}
 	}
   }

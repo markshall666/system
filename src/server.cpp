@@ -25,15 +25,16 @@ int main()
 	  union itcMsg* msg = itcAlloc(sizeof(RegisterAppCfmS), REGISTER_APP_CFM);
 	  msg->registerAppCfm.result = true;
 	  strcpy(msg->registerAppReq.appName, client);
-	  sendData(fd, client, msg);
+	  sendData(client, msg);
   }
 
   while(1)
   {
+	  memset(buf, 0, 16);
 	  fgets((char*)buf, 16, stdin);
 	  union itcMsg* msg = itcAlloc(sizeof(DispatchAppS), DISPATCH_APP);
 	  strcpy(msg->dispatchApp.message, (char*)buf);
-	  sendData(fd, client, msg);
+	  sendData(client, msg);
   }
   terminateItc(fd);
 }

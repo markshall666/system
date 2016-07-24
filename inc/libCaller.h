@@ -15,13 +15,12 @@ class LibCaller
   int itcId;
   public:
   LibCaller(const char* _appName);
+  virtual ~LibCaller();
 
-  virtual ~LibCaller()
-  {
-  }
   bool dispatch();
   bool registerObj(CallbackObj* _obj);
   bool init();
+  void terminate();
   int getEventDescriptor();
 };
 

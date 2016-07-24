@@ -35,7 +35,7 @@ bool initItc(const char* name, int* fd)
     perror("binding dgram socket");
     return false;   
   }
-  
+
   *fd = sock;
   struct threadData* thread = (struct threadData*)malloc(sizeof(struct threadData));
   thread->fd = *fd;
@@ -59,17 +59,20 @@ bool initItc(const char* name, int* fd)
   return true;
 }
 
-bool sendData(int sender, const char* receiver, union itcMsg* msg)
+bool sendData(const char* receiver, union itcMsg* msg)
 {
+  struct threadData* thDataPtr = getThreadDataPtr(0);
   struct internalMsg* msgInt = getInternalMsg(msg);
+  msgInt->senderTId = pthread_self();
   uint32_t size = msgInt->size + ITC_MESSAGE_HEADER;
   struct sockaddr_un receiverAddr;
   receiverAddr.sun_family = AF_UNIX;
   strcpy(receiverAddr.sun_path, receiver);
   printf("sending message to %s len = %d\n", receiver, size - ITC_MESSAGE_HEADER); //debug
-  if (sendto(sender, msgInt, size, 0, (struct sockaddr *) &receiverAddr, sizeof(struct sockaddr_un)) != size)
+  if (sendto(thDataPtr->fd, msgInt, size, 0, (struct sockaddr *) &receiverAddr, sizeof(struct sockaddr_un)) != size)
   {
     perror("failed to send");
+    itcFree(msg);
     return false;
   }
   itcFree(msg);
@@ -91,6 +94,10 @@ union itcMsg* receiveData()
 void terminateItc(int fd)
 {
 	close(fd);
+	struct threadData* threadData = getThreadDataPtr(0);
+	free(threadData->buf);
+	free(threadData);
+	free(*getThreadsData());
 }
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
@@ -101,8 +108,8 @@ union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
 	{
 		perror("Cannot allocate message");
 	}
+	memset(msgPtr, 0, bufSize + ITC_MESSAGE_HEADER);
 	msgPtr->size = bufSize;
-	msgPtr->senderFd = 0;
 	msgPtr->msgNo = msgNo;
 	printf("alloc %d bytes\n", msgPtr->size); //debug
 	return (union itcMsg*)&(msgPtr->msgNo); 

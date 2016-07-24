@@ -10,6 +10,7 @@ class LibFactory
   public:
   static LibCaller* getInstance();
   static LibCaller* getInstance(const char* _appName);
+  static void releaseInstance();
 };
 
 #endif

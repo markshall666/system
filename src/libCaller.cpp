@@ -14,6 +14,11 @@ LibCaller::LibCaller(const char* _appName)
   appName = (char*)_appName;
 }
 
+LibCaller::~LibCaller()
+{
+	terminate();
+}
+
 bool LibCaller::registerObj(CallbackObj* obj)
 {
   objMap.insert(pair<int,  CallbackObj*>(++mapIter, obj));
@@ -34,7 +39,10 @@ bool LibCaller::init()
   union itcMsg* msg = itcAlloc(sizeof(RegisterAppReqS), REGISTER_APP_REQ);
   strcpy(msg->registerAppReq.appName, appName);
   itcPrintMsg(msg);
-  sendData(itcId, TRAN_SERVER, msg);
+  if (!sendData(TRAN_SERVER, msg))
+  {
+	  return false;
+  }
 
   msg = receiveData();
   itcPrintMsg(msg);
@@ -48,6 +56,19 @@ bool LibCaller::init()
   return result;
 }
 
+void LibCaller::terminate()
+{
+  if (itcId)
+  {
+    terminateItc(itcId);
+  }
+  for (std::map<int, CallbackObj*>::const_iterator it = objMap.begin(); it != objMap.end(); it++)
+  {
+    delete it->second;
+  }
+  objMap.clear();
+}
+
 int LibCaller::getEventDescriptor()
 {
 	return itcId;
@@ -57,7 +78,7 @@ bool LibCaller::dispatch()
 {
     union itcMsg* msg = receiveData();
     itcPrintMsg(msg);
-    objMap[1]->onCall(msg->dispatchApp.message);
+    bool result = objMap[1]->onCall(msg->dispatchApp.message);
     itcFree(msg);
-    return true;
+    return result;
 }

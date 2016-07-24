@@ -32,3 +32,9 @@ LibCaller* LibFactory::getInstance(const char* _appName)
   }
   return instance;
 }
+
+void LibFactory::releaseInstance()
+{
+	delete instance;
+	instance = NULL;
+}

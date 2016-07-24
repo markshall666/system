@@ -13,7 +13,7 @@ extern "C" {
 
 bool initItc(const char* name, int* fd);
 
-bool sendData(int sender, const char* receiver, union itcMsg* msg);
+bool sendData(const char* receiver, union itcMsg* msg);
 
 union itcMsg* receiveData();
 
