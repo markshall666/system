@@ -10,7 +10,7 @@ links:
 	ln -s extLib.so.1.0.1 extLib.so
 app:
 	g++ -c src/main.cpp src/myCallbackObj.cpp -Iinc -Wall
-	g++ -o main main.o myCallbackObj.o -L. extLib.so.1.0.1 -Wall
+	g++ -o main main.o myCallbackObj.o -L. extLib.so.1.0.1 -Wall -pthread
 server:
 	g++ -c src/server.cpp -Iinc -Iitc/inc -pthread -Wall
 	g++ -o callServer server.o -L. itc/itc.so.1.0.1 -Wall 

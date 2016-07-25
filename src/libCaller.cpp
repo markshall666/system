@@ -60,7 +60,7 @@ void LibCaller::terminate()
 {
   if (itcId)
   {
-    terminateItc(itcId);
+    terminateItc(&itcId);
   }
   for (std::map<int, CallbackObj*>::const_iterator it = objMap.begin(); it != objMap.end(); it++)
   {

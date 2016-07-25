@@ -10,6 +10,7 @@ extern "C" {
 #include <pthread.h>
 #include "itc_internal.h"
 
+uint32_t noThd;
 
 bool initItc(const char* name, int* fd);
 
@@ -17,7 +18,7 @@ bool sendData(const char* receiver, union itcMsg* msg);
 
 union itcMsg* receiveData();
 
-void terminateItc(int fd);
+void terminateItc(int* fd);
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo);
 

@@ -36,5 +36,5 @@ int main()
 	  strcpy(msg->dispatchApp.message, (char*)buf);
 	  sendData(client, msg);
   }
-  terminateItc(fd);
+  terminateItc(&fd);
 }

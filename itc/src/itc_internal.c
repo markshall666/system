@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include "itc_internal.h"
 
-struct threadData** threadsData =  NULL;
+struct threadData** threadsData = NULL;
 
 struct internalMsg* getInternalMsg(union itcMsg* msg)
 {
@@ -25,7 +25,7 @@ struct threadData* getThreadDataPtr(int sock)
 	if (!sock)
 	{
 		pthread_t currentTId = pthread_self();
-		while (threadsData[index]->tId != currentTId)
+		while (threadsData[index] != NULL && threadsData[index]->tId != currentTId)
 			{
 				++index;
 			}
@@ -38,9 +38,4 @@ struct threadData* getThreadDataPtr(int sock)
 		}
 	}
 	return threadsData[index];
-}
-
-struct threadData*** getThreadsData()
-{
-	return &threadsData;
 }
