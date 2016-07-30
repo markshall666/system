@@ -16,6 +16,9 @@
 
 int socket(int domain, int type, int protocol)
 {
+	check_expected(domain);
+	check_expected(type);
+	check_expected(protocol);
 	return mock_type(int);
 }
 
@@ -31,5 +34,15 @@ int bind (int fd, const struct sockaddr* addr, socklen_t len)
 pthread_t pthread_self()
 {
 	return mock_type(pthread_t);
+}
+
+ssize_t sendto(int fd, const void* buf, size_t n, int flags, const struct sockaddr* addr, socklen_t addr_len)
+{
+	check_expected(fd);
+	check_expected(buf);
+	check_expected(flags);
+	check_expected(addr);
+	check_expected(addr_len);
+	return mock_type(ssize_t);
 }
 

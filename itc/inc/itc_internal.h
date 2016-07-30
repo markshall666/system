@@ -15,7 +15,7 @@
 #define ITC_MESSAGE_HEADER 8
 #define MAX_NO_APP 16
 
-extern struct threadData** threadsData;
+extern int noThd;
 
 struct internalMsg
 {
@@ -35,6 +35,10 @@ struct threadData
 union itcMsg;
 
 struct internalMsg* getInternalMsg(union itcMsg* msg);
+
+void storeThreadData(struct threadData* data);
+
+void removeThreadData(struct threadData* data);
 
 struct threadData* getThreadDataPtr(int sock);
 

@@ -10,7 +10,6 @@ extern "C" {
 #include <pthread.h>
 #include "itc_internal.h"
 
-uint32_t noThd;
 
 bool initItc(const char* name, int* fd);
 

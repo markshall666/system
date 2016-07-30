@@ -12,7 +12,7 @@
 
 bool initItc(const char* name, int* fd)
 {
-  if (noThd > MAX_NO_APP)
+  if (noThd == MAX_NO_APP)
   {
     perror("Number of application exceeded");
 	return false;
@@ -42,16 +42,8 @@ bool initItc(const char* name, int* fd)
   strcpy(thread->name, name);
   thread->buf = malloc(ITC_MAX_MSG_SIZE);
 
-  if (threadsData == NULL)
-  {
-	threadsData = (struct threadData**)malloc(sizeof(struct threadData*) * MAX_NO_APP);
-	for (uint32_t i = 0; i < MAX_NO_APP; ++i)
-	{
-	  threadsData[i] = NULL;
-	}
-  }
-  threadsData[noThd] = thread;
-  ++noThd;
+  storeThreadData(thread);
+
   printf("no threads = %d\n", noThd); //debug
   printf("fd = %d, tId = 0x%x, name = %s\n", thread->fd, (uint32_t)thread->tId, thread->name); //debug
   return true;
@@ -94,15 +86,7 @@ void terminateItc(int* fd)
 	close(*fd);
 	*fd = 0;
 	struct threadData* threadData = getThreadDataPtr(0);
-	free(threadData->buf);
-	free(threadData);
-	threadData = NULL; //??
-	--noThd;
-	if (noThd == 0)
-	{
-	  free(threadsData);
-	  threadsData = NULL;
-	}
+	removeThreadData(threadData);
 }
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
