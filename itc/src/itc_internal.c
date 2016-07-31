@@ -32,7 +32,7 @@ void storeThreadData(struct threadData* data)
 		}
 	}
 
-	for (int i = 0; i <= MAX_NO_APP; i++)
+	for (int i = 0; i < MAX_NO_APP; i++)
 	{
 		if (threadsData[i] == NULL)
 		{
@@ -47,7 +47,7 @@ void removeThreadData(struct threadData* data)
 {
 	free(data->buf);
 	free(data);
-	for (int i = 0; i <= MAX_NO_APP; i++)
+	for (int i = 0; i < MAX_NO_APP; i++)
 	{
 		if (threadsData[i] == data)
 		{
@@ -66,22 +66,30 @@ void removeThreadData(struct threadData* data)
 
 struct threadData* getThreadDataPtr(int sock)
 {
-	uint32_t index = 0;
+	struct threadData* ptr = NULL;
 	if (!sock)
 	{
 		pthread_t currentTId = pthread_self();
-		while (threadsData[index] == NULL || threadsData[index]->tId != currentTId)
+		for (int i = 0; i <= MAX_NO_APP; i++)
 		{
-			++index;
+			if (threadsData[i] != NULL && threadsData[i]->tId == currentTId)
+			{
+				ptr = threadsData[i];
+				break;
+			}
 		}
 	}
 	else
 	{
-		while (threadsData[index] == NULL || threadsData[index]->fd != sock)
+		for (int i = 0; i <= MAX_NO_APP; i++)
 		{
-			++index;
+			if (threadsData[i] != NULL && threadsData[i]->fd == sock)
+			{
+				ptr = threadsData[i];
+				break;
+			}
 		}
 	}
 
-	return threadsData[index];
+	return ptr;
 }

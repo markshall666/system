@@ -40,6 +40,7 @@ ssize_t sendto(int fd, const void* buf, size_t n, int flags, const struct sockad
 {
 	check_expected(fd);
 	check_expected(buf);
+	check_expected(n);
 	check_expected(flags);
 	check_expected(addr);
 	check_expected(addr_len);
