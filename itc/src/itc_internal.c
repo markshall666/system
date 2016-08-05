@@ -67,26 +67,29 @@ void removeThreadData(struct threadData* data)
 struct threadData* getThreadDataPtr(int sock)
 {
 	struct threadData* ptr = NULL;
-	if (!sock)
+	if (threadsData)
 	{
-		pthread_t currentTId = pthread_self();
-		for (int i = 0; i <= MAX_NO_APP; i++)
+		if (!sock)
 		{
-			if (threadsData[i] != NULL && threadsData[i]->tId == currentTId)
+			pthread_t currentTId = pthread_self();
+			for (int i = 0; i <= MAX_NO_APP; i++)
 			{
-				ptr = threadsData[i];
-				break;
+				if (threadsData[i] != NULL && threadsData[i]->tId == currentTId)
+				{
+					ptr = threadsData[i];
+					break;
+				}
 			}
 		}
-	}
-	else
-	{
-		for (int i = 0; i <= MAX_NO_APP; i++)
+		else
 		{
-			if (threadsData[i] != NULL && threadsData[i]->fd == sock)
+			for (int i = 0; i <= MAX_NO_APP; i++)
 			{
-				ptr = threadsData[i];
-				break;
+				if (threadsData[i] != NULL && threadsData[i]->fd == sock)
+				{
+					ptr = threadsData[i];
+					break;
+				}
 			}
 		}
 	}

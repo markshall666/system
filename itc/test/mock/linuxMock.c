@@ -12,7 +12,14 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <pthread.h>
+#include <stdint.h>
+#include <string.h>
 
+
+void* recv_helper()
+{
+	return mock_type(void*);
+}
 
 int socket(int domain, int type, int protocol)
 {
@@ -47,3 +54,12 @@ ssize_t sendto(int fd, const void* buf, size_t n, int flags, const struct sockad
 	return mock_type(ssize_t);
 }
 
+ssize_t recv(int fd, void* buf, size_t n, int flags)
+{
+	check_expected(fd);
+	check_expected(n);
+	void* msg = recv_helper();
+	int bytes = *(uint32_t*)msg;
+	memcpy(buf, msg, bytes + 8);
+	return mock_type(ssize_t);
+}

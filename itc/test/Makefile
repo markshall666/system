@@ -1,7 +1,7 @@
 IDIR=../inc
 SDIR=../src/itc.c ../src/itc_internal.c src/itcTest.c mock/linuxMock.c
 CC=gcc
-CFLAGS=std=c99 -Wall -lcmocka -g
+CFLAGS=std=c99 -Wall -lcmocka -g -ftest-coverage -fprofile-arcs
 OUT=itcTest
 
 default:

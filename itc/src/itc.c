@@ -14,7 +14,7 @@ bool initItc(const char* name, int* fd)
 {
   if (noThd == MAX_NO_APP)
   {
-    perror("Number of application exceeded");
+    fprintf(stderr, "Number of application exceeded\n");
 	return false;
   }
   
@@ -52,6 +52,12 @@ bool initItc(const char* name, int* fd)
 bool sendData(const char* receiver, union itcMsg* msg)
 {
   struct threadData* thDataPtr = getThreadDataPtr(0);
+  if (thDataPtr == NULL)
+  {
+	  fprintf(stderr, "failed to send, Itc not initialized\n");
+	  itcFree(msg);
+	  return false;
+  }
   struct internalMsg* msgInt = getInternalMsg(msg);
   msgInt->senderTId = pthread_self();
   uint32_t size = msgInt->size + ITC_MESSAGE_HEADER;
@@ -72,6 +78,11 @@ bool sendData(const char* receiver, union itcMsg* msg)
 union itcMsg* receiveData()
 {
   struct threadData* thDataPtr = getThreadDataPtr(0);
+  if (thDataPtr == NULL)
+  {
+	  fprintf(stderr, "failed to receive, Itc not initialized\n");
+	  return NULL;
+  }
   memset(thDataPtr->buf, 0, ITC_MAX_MSG_SIZE);
   uint32_t recBytes = recv(thDataPtr->fd, thDataPtr->buf, ITC_MAX_MSG_SIZE, 0);
   void* buf = malloc(recBytes);
@@ -83,10 +94,16 @@ union itcMsg* receiveData()
 
 void terminateItc(int* fd)
 {
+	struct threadData* thDataPtr = getThreadDataPtr(0);
+	if (thDataPtr == NULL)
+	{
+		fprintf(stderr, "failed to terminate, Itc not initialized\n");
+		return;
+	}
+
 	close(*fd);
 	*fd = 0;
-	struct threadData* threadData = getThreadDataPtr(0);
-	removeThreadData(threadData);
+	removeThreadData(thDataPtr);
 }
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
