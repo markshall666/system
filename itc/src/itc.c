@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include "itc.h"
 #include "itc_internal.h"
+#include "trace.h"
 
 
 bool initItc(const char* name, int* fd)
@@ -44,8 +45,8 @@ bool initItc(const char* name, int* fd)
 
   storeThreadData(thread);
 
-  printf("no threads = %d\n", noThd); //debug
-  printf("fd = %d, tId = 0x%x, name = %s\n", thread->fd, (uint32_t)thread->tId, thread->name); //debug
+  TRACE_DEBUG("no threads = %d", noThd);
+  TRACE_DEBUG("fd = %d, tId = 0x%x, name = %s", thread->fd, (uint32_t)thread->tId, thread->name);
   return true;
 }
 
@@ -64,7 +65,7 @@ bool sendData(const char* receiver, union itcMsg* msg)
   struct sockaddr_un receiverAddr;
   receiverAddr.sun_family = AF_UNIX;
   strcpy(receiverAddr.sun_path, receiver);
-  printf("sending message to %s len = %d\n", receiver, size - ITC_MESSAGE_HEADER); //debug
+  TRACE_DEBUG("sending message to %s len = %d", receiver, size - ITC_MESSAGE_HEADER);
   if (sendto(thDataPtr->fd, msgInt, size, 0, (struct sockaddr *) &receiverAddr, sizeof(struct sockaddr_un)) != size)
   {
     perror("failed to send");
@@ -117,7 +118,7 @@ union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
 	memset(msgPtr, 0, bufSize + ITC_MESSAGE_HEADER);
 	msgPtr->size = bufSize;
 	msgPtr->msgNo = msgNo;
-	printf("alloc %d bytes\n", msgPtr->size); //debug
+	TRACE_DEBUG("alloc %d bytes", msgPtr->size);
 	return (union itcMsg*)&(msgPtr->msgNo); 
 }
 

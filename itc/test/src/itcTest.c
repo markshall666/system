@@ -4,6 +4,7 @@
 #include <cmocka.h>
 #include <sys/socket.h>
 #include "itc.h"
+#include "trace.h"
 
 int fd1, fd2, fd3;
 
@@ -202,8 +203,10 @@ static void itcReceiveDataFailed(void **state)
 	assert_int_equal(receiveData(), NULL);
 }
 
-int main(void)
+int main(int argc, const char** argv)
 {
+    TRACE_INIT(argc, argv);
+
     const struct CMUnitTest tests[] =
     {
     	cmocka_unit_test(itcInit),
