@@ -5,7 +5,7 @@ CFLAGS=std=c99 -Wall -lcmocka -g -ftest-coverage -fprofile-arcs
 OUT=itcTest
 
 default:
-	$(CC) $(SDIR) $(INC) -$(CFLAGS) -o $(OUT) 
+	$(CC) $(SDIR) $(INC) -$(CFLAGS) -o $(OUT)
 
 clean:
 	rm -f *.o

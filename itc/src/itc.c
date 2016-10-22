@@ -15,7 +15,7 @@ bool initItc(const char* name, int* fd)
 {
   if (noThd == MAX_NO_APP)
   {
-    fprintf(stderr, "Number of application exceeded\n");
+    TRACE_ERROR("Number of application exceeded");
 	return false;
   }
   
@@ -23,7 +23,7 @@ bool initItc(const char* name, int* fd)
   int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (sock < 0) 
   {
-    perror("opening dgram socket");
+    TRACE_PERROR("opening dgram socket");
     return false;
   }
   
@@ -32,7 +32,7 @@ bool initItc(const char* name, int* fd)
   unlink(name);
   if (bind(sock, (struct sockaddr *) &server, sizeof(struct sockaddr_un)))
   {
-    perror("binding dgram socket");
+	TRACE_PERROR("binding dgram socket");
     return false;   
   }
 
@@ -55,7 +55,7 @@ bool sendData(const char* receiver, union itcMsg* msg)
   struct threadData* thDataPtr = getThreadDataPtr(0);
   if (thDataPtr == NULL)
   {
-	  fprintf(stderr, "failed to send, Itc not initialized\n");
+	  TRACE_ERROR("failed to send, Itc not initialized");
 	  itcFree(msg);
 	  return false;
   }
@@ -68,7 +68,7 @@ bool sendData(const char* receiver, union itcMsg* msg)
   TRACE_DEBUG("sending message to %s len = %d", receiver, size - ITC_MESSAGE_HEADER);
   if (sendto(thDataPtr->fd, msgInt, size, 0, (struct sockaddr *) &receiverAddr, sizeof(struct sockaddr_un)) != size)
   {
-    perror("failed to send");
+    TRACE_PERROR("failed to send");
     itcFree(msg);
     return false;
   }
@@ -81,7 +81,7 @@ union itcMsg* receiveData()
   struct threadData* thDataPtr = getThreadDataPtr(0);
   if (thDataPtr == NULL)
   {
-	  fprintf(stderr, "failed to receive, Itc not initialized\n");
+	  TRACE_ERROR("failed to receive, Itc not initialized");
 	  return NULL;
   }
   memset(thDataPtr->buf, 0, ITC_MAX_MSG_SIZE);
@@ -95,48 +95,48 @@ union itcMsg* receiveData()
 
 void terminateItc(int* fd)
 {
-	struct threadData* thDataPtr = getThreadDataPtr(0);
-	if (thDataPtr == NULL)
-	{
-		fprintf(stderr, "failed to terminate, Itc not initialized\n");
-		return;
-	}
+  struct threadData* thDataPtr = getThreadDataPtr(0);
+  if (thDataPtr == NULL)
+  {
+    TRACE_ERROR("failed to terminate, Itc not initialized");
+    return;
+  }
 
-	close(*fd);
-	*fd = 0;
-	removeThreadData(thDataPtr);
+  close(*fd);
+  *fd = 0;
+  removeThreadData(thDataPtr);
 }
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
 {
-	struct internalMsg* msgPtr; 
-	msgPtr = (struct internalMsg*)malloc(bufSize + ITC_MESSAGE_HEADER);
-	if (msgPtr == NULL)
-	{
-		perror("Cannot allocate message");
-	}
-	memset(msgPtr, 0, bufSize + ITC_MESSAGE_HEADER);
-	msgPtr->size = bufSize;
-	msgPtr->msgNo = msgNo;
-	TRACE_DEBUG("alloc %d bytes", msgPtr->size);
-	return (union itcMsg*)&(msgPtr->msgNo); 
+  struct internalMsg* msgPtr;
+  msgPtr = (struct internalMsg*)malloc(bufSize + ITC_MESSAGE_HEADER);
+  if (msgPtr == NULL)
+  {
+    TRACE_PERROR("Cannot allocate message");
+  }
+  memset(msgPtr, 0, bufSize + ITC_MESSAGE_HEADER);
+  msgPtr->size = bufSize;
+  msgPtr->msgNo = msgNo;
+  TRACE_DEBUG("alloc %d bytes", msgPtr->size);
+  return (union itcMsg*)&(msgPtr->msgNo);
 }
 
 void itcFree(union itcMsg* msg)
 {
-	struct internalMsg* intMsg = getInternalMsg(msg);
-	free(intMsg);
+  struct internalMsg* intMsg = getInternalMsg(msg);
+  free(intMsg);
 }
 
 void itcPrintMsg(union itcMsg* msg)
 {
-	const unsigned char* const bytes = (const unsigned char* const)msg;
-	uint32_t* msgPtr = (uint32_t*)msg;
-	
-	printf("[");
-	for(size_t i = 0; i < *(msgPtr-2); i++)
-	{
-		printf("%02x ", bytes[i]);
-	}
-	printf("]\n");
+  const unsigned char* const bytes = (const unsigned char* const)msg;
+  uint32_t* msgPtr = (uint32_t*)msg;
+
+  printf("[");
+  for(size_t i = 0; i < *(msgPtr-2); i++)
+  {
+    printf("%02x ", bytes[i]);
+  }
+  printf("]\n");
 }

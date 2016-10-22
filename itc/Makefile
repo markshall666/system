@@ -1,10 +1,10 @@
-IDIR=inc
+INC=-Iinc -I../inc
 SDIR=src/itc.c src/itc_internal.c
 CC=gcc
 CFLAGS=std=c99 -fPIC -Wall
 
 default:
-	$(CC) -c $(SDIR) -I$(IDIR) -$(CFLAGS)
+	$(CC) -c $(SDIR) $(INC) -$(CFLAGS)
 	$(CC) -shared -pthread -Wl,-soname,itc.so.1 -o itc.so.1.0.1 itc.o itc_internal.o -Wall -std=c99
 
 links: 

@@ -4,11 +4,13 @@
 #include "myCallbackObj.h"
 #include <iostream>
 #include <poll.h>
+#include "trace.h"
 
 using namespace std;
 
-int main()
-{  
+int main(int argc, const char** argv)
+{
+  TRACE_INIT(argc, argv);
   const char* name = "kotek";
   LibCaller* caller = LibFactory::getInstance(name);
   CallbackObj* obj = new MyCallbackObj();

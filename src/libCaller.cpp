@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "messages.h"
 #include "itc.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -38,14 +39,14 @@ bool LibCaller::init()
 
   union itcMsg* msg = itcAlloc(sizeof(RegisterAppReqS), REGISTER_APP_REQ);
   strcpy(msg->registerAppReq.appName, appName);
-  itcPrintMsg(msg);
+  TRACE_MSG(msg);
   if (!sendData(TRAN_SERVER, msg))
   {
 	  return false;
   }
 
   msg = receiveData();
-  itcPrintMsg(msg);
+  TRACE_MSG(msg);
 
   if (msg->registerAppCfm.result)
   {

@@ -135,6 +135,7 @@ static void itcSendData(void **state)
 	initItc("test1", &fd1);
 	void* msg = itcAlloc(8, 666);
 	uint32_t* msgPtr = msg;
+	TRACE_MSG(msg);
 
 	will_return_count(pthread_self, THREAD_1, 3);
 	expect_value(sendto, fd, fd1);
