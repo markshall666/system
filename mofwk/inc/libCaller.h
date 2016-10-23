@@ -5,7 +5,7 @@
 #include "iostream"
 #include <map>
 
-#define TRAN_SERVER "tranServer"
+#define TRAN_SERVER "configServer"
 
 class LibCaller
 {

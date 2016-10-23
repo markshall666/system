@@ -1,6 +1,6 @@
 INC=-Iinc -I../common/inc -I../itc/inc
-SDIR=src/server.cpp
-OBJECTS=server.o
+SDIR=src/server.cpp src/marekObject.cpp src/database.cpp src/communicationHandler.cpp
+OBJECTS=server.o marekObject.o database.o communicationHandler.o
 OUT=tranServer
 EXTLIB=-L. ../itc/itc.so.1.0.1
 CC=g++

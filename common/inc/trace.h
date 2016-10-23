@@ -12,7 +12,12 @@
 #include <stdarg.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern int trace_enable;
+#else
 int trace_enable;
+#endif
+
 
 #define TRACE_INIT(argc, argv) {                  \
   if (argc > 1 && strcmp(argv[1], "debug") == 0){ \

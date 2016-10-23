@@ -1,34 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "server.h"
 #include "messages.h"
 #include "itc.h"
+#include "communicationHandler.h"
+#include "trace.h"
 
-#define NAME "tranServer"
 
-int main()
-{ 
-  int fd;
-  void* buf = malloc(16);
-  char* client = (char*)malloc(16);
+int main(int argc, const char** argv)
+{
+  TRACE_INIT(argc, argv);
+  CommunicationHandler* comHandler = new CommunicationHandler();
+  comHandler->init();
+  while(1);
 
-  if (!initItc(NAME, &fd))
-  {
-    return 0;
-  }
-  union itcMsg* msg = receiveData();
-  itcPrintMsg(msg);
-  if (msg->msgNo == REGISTER_APP_REQ)
-  {
-	  strcpy(client, msg->registerAppReq.appName);
-	  itcFree(msg);
-	  union itcMsg* msg = itcAlloc(sizeof(RegisterAppCfmS), REGISTER_APP_CFM);
-	  msg->registerAppCfm.result = true;
-	  strcpy(msg->registerAppReq.appName, client);
-	  sendData(client, msg);
-  }
-
-  while(1)
+  /*while(1)
   {
 	  memset(buf, 0, 16);
 	  fgets((char*)buf, 16, stdin);
@@ -36,5 +23,5 @@ int main()
 	  strcpy(msg->dispatchApp.message, (char*)buf);
 	  sendData(client, msg);
   }
-  terminateItc(&fd);
+  terminateItc(&fd);*/
 }
