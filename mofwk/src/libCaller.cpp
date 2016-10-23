@@ -78,7 +78,7 @@ int LibCaller::getEventDescriptor()
 bool LibCaller::dispatch()
 {
     union itcMsg* msg = receiveData();
-    itcPrintMsg(msg);
+    TRACE_MSG(msg);
     bool result = objMap[1]->onCall(msg->dispatchApp.message);
     itcFree(msg);
     return result;

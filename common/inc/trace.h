@@ -41,6 +41,16 @@ int trace_enable;
   perror(__VA_ARGS__);              \
 }
 
+#define TRACE_ENTER {               \
+  if (trace_enable){                \
+    printf("Enter ");               \
+    printf(__func__);               \
+    printf("\n");                   \
+  }                                 \
+}                                   \
+
+
+
 #define TRACE_MSG(msg){                                                 \
   if (trace_enable){                                                    \
     const unsigned char* const bytes = (const unsigned char* const)msg; \

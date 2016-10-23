@@ -8,10 +8,11 @@
 #ifndef DATABASE_H_
 #define DATABASE_H_
 
+#include "databaseIf.h"
 #include "marekObject.h"
 #include <map>
 
-class DataBase
+class DataBase: public DataBaseIf
 {
   public:
   DataBase();
@@ -21,9 +22,11 @@ class DataBase
   bool modifyMO(MarekObject mo);
   bool deleteMO(MarekObject mo);
   MarekObject getMO(std::string name);
+  unsigned int getNextObjectId();
 
   private:
   std::map<unsigned int, MarekObject> moMap;
+  unsigned int objectIdCounter;
 
 };
 

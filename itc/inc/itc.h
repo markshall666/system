@@ -21,9 +21,9 @@ void terminateItc(int* fd);
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo);
 
-void itcPrintMsg(union itcMsg* msg);
-
 void itcFree(union itcMsg* msg);
+
+pthread_t getSenderTId(union itcMsg* msg);
 
 #ifdef __cplusplus
 }

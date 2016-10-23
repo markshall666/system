@@ -6,8 +6,10 @@
  */
 
 #include "database.h"
+#include "trace.h"
 
 DataBase::DataBase()
+:objectIdCounter(0)
 {}
 
 DataBase::~DataBase()
@@ -16,6 +18,7 @@ DataBase::~DataBase()
 bool DataBase::addMO(MarekObject mo)
 {
   moMap.insert(std::pair<unsigned int, MarekObject>(mo.getObjectId(), mo));
+  objectIdCounter = mo.getObjectId() + 1;
   return true;
 }
 
@@ -50,12 +53,19 @@ bool DataBase::deleteMO(MarekObject mo)
 
 MarekObject DataBase::getMO(std::string name)
 {
+  TRACE_DEBUG("Enter DataBase::getMO with %s", name.c_str());
   for (std::map<unsigned int, MarekObject>::iterator it = moMap.begin(); it != moMap.end(); ++it)
   {
+    TRACE_DEBUG("iterating %s", it->second.getMoName().c_str());
     if (it->second.getMoName() == name)
     {
       return it->second;
     }
   }
   return MarekObject("", 0);
+}
+
+unsigned int DataBase::getNextObjectId()
+{
+  return objectIdCounter;
 }

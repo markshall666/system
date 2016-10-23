@@ -16,7 +16,7 @@ bool initItc(const char* name, int* fd)
   if (noThd == MAX_NO_APP)
   {
     TRACE_ERROR("Number of application exceeded");
-	return false;
+    return false;
   }
   
   struct sockaddr_un server;
@@ -32,7 +32,7 @@ bool initItc(const char* name, int* fd)
   unlink(name);
   if (bind(sock, (struct sockaddr *) &server, sizeof(struct sockaddr_un)))
   {
-	TRACE_PERROR("binding dgram socket");
+    TRACE_PERROR("binding dgram socket");
     return false;   
   }
 
@@ -55,9 +55,9 @@ bool sendData(const char* receiver, union itcMsg* msg)
   struct threadData* thDataPtr = getThreadDataPtr(0);
   if (thDataPtr == NULL)
   {
-	  TRACE_ERROR("failed to send, Itc not initialized");
-	  itcFree(msg);
-	  return false;
+    TRACE_ERROR("failed to send, Itc not initialized");
+    itcFree(msg);
+    return false;
   }
   struct internalMsg* msgInt = getInternalMsg(msg);
   msgInt->senderTId = pthread_self();
@@ -81,8 +81,8 @@ union itcMsg* receiveData()
   struct threadData* thDataPtr = getThreadDataPtr(0);
   if (thDataPtr == NULL)
   {
-	  TRACE_ERROR("failed to receive, Itc not initialized");
-	  return NULL;
+    TRACE_ERROR("failed to receive, Itc not initialized");
+    return NULL;
   }
   memset(thDataPtr->buf, 0, ITC_MAX_MSG_SIZE);
   uint32_t recBytes = recv(thDataPtr->fd, thDataPtr->buf, ITC_MAX_MSG_SIZE, 0);
@@ -128,15 +128,8 @@ void itcFree(union itcMsg* msg)
   free(intMsg);
 }
 
-void itcPrintMsg(union itcMsg* msg)
+pthread_t getSenderTId(union itcMsg* msg)
 {
-  const unsigned char* const bytes = (const unsigned char* const)msg;
-  uint32_t* msgPtr = (uint32_t*)msg;
-
-  printf("[");
-  for(size_t i = 0; i < *(msgPtr-2); i++)
-  {
-    printf("%02x ", bytes[i]);
-  }
-  printf("]\n");
+  struct internalMsg* intMsg = getInternalMsg(msg);
+  return intMsg->senderTId;
 }

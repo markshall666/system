@@ -8,4 +8,4 @@ default:
 	$(CC) $(SDIR) $(INC) -$(CFLAGS) -o $(OUT)
 
 clean:
-	rm -f *.o $(OUT)
+	rm -f *.o $(OUT) *.gcda *.gcno

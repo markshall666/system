@@ -19,17 +19,17 @@ extern int noThd;
 
 struct internalMsg
 {
-	uint32_t size;
-	uint32_t senderTId;
-	uint32_t msgNo;
+  uint32_t size;
+  uint32_t senderTId;
+  uint32_t msgNo;
 };
 
 struct threadData
 {
-	int fd;
-	char name[16];
-	pthread_t tId;
-	void* buf;
+  int fd;
+  char name[16];
+  pthread_t tId;
+  void* buf;
 };
 
 union itcMsg;

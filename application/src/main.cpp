@@ -8,6 +8,8 @@
 
 using namespace std;
 
+int trace_enable;
+
 int main(int argc, const char** argv)
 {
   TRACE_INIT(argc, argv);
