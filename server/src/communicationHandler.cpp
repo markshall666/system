@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "trace.h"
+#include "poll.h"
 
 CommunicationHandler::CommunicationHandler(std::map<pthread_t, std::string>* mapPtr, TransactionHandler* tranHandler)
 {
@@ -40,25 +41,33 @@ void* CommunicationHandler::mainLoop(void* ptr)
     return NULL;
   }
 
+  struct pollfd fds;
+  fds.fd = fd;
+  fds.events = POLLIN;
+
   while (true)
   {
-    union itcMsg* msg = receiveData();
-    TRACE_MSG(msg);
-    switch (msg->msgNo)
+    poll(&fds, 1, -1);
+    if (fds.revents == POLLIN)
     {
-      case REGISTER_APP_REQ:
+      union itcMsg* msg = receiveData();
+      TRACE_MSG(msg);
+      switch (msg->msgNo)
       {
-        handlerPtr->handleRegisterAppReq(msg);
-        break;
-      }
-      case UPDATE_MO_REQ:
-      {
-        handlerPtr->handleUpdateMoReq(msg);
-        break;
-      }
-      default:
-      {
-	TRACE_ERROR("Received unknown message, msgNo = 0x%x", msg->msgNo);
+	case REGISTER_APP_REQ:
+	{
+	  handlerPtr->handleRegisterAppReq(msg);
+	  break;
+	}
+	case UPDATE_MO_REQ:
+	{
+	  handlerPtr->handleUpdateMoReq(msg);
+	  break;
+	}
+	default:
+	{
+	  TRACE_ERROR("Received unknown message, msgNo = 0x%x", msg->msgNo);
+	}
       }
     }
   }

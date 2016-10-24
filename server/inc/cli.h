@@ -25,6 +25,8 @@ class Cli
   void readCommand();
   std::string handleRead(std::string);
   std::string handleCreate(std::string);
+  std::string handleDelete(std::string);
+  std::string handleSet(std::string);
 
   TransactionHandler* transactionHandlerPtr;
   DataBaseIf* dataBasePtr;

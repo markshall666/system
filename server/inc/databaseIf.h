@@ -9,7 +9,6 @@
 #define DATABASEIF_H_
 
 #include <string>
-#include "marekObject.h"
 
 /*
  * DataBase abstract interface to make possible stub.
@@ -20,11 +19,10 @@ class DataBaseIf
   virtual ~DataBaseIf()
   {}
 
-  virtual bool addMO(MarekObject) = 0;
-  virtual bool modifyMO(MarekObject) = 0;
-  virtual bool deleteMO(MarekObject) = 0;
-  virtual MarekObject getMO(std::string) = 0;
-  virtual unsigned int getNextObjectId() = 0;
+  virtual bool addMO(std::string, void*) = 0;
+  virtual bool modifyMO(std::string, void*) = 0;
+  virtual bool deleteMO(std::string) = 0;
+  virtual void* getMO(std::string) = 0;
 };
 
 

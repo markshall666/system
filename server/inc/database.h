@@ -9,8 +9,9 @@
 #define DATABASE_H_
 
 #include "databaseIf.h"
-#include "marekObject.h"
 #include <map>
+#include <string>
+#include <sqlite3.h>
 
 class DataBase: public DataBaseIf
 {
@@ -18,14 +19,18 @@ class DataBase: public DataBaseIf
   DataBase();
   virtual ~DataBase();
 
-  bool addMO(MarekObject mo);
-  bool modifyMO(MarekObject mo);
-  bool deleteMO(MarekObject mo);
-  MarekObject getMO(std::string name);
-  unsigned int getNextObjectId();
+  bool addMO(std::string, void*);
+  bool modifyMO(std::string, void*);
+  bool deleteMO(std::string);
+  void* getMO(std::string);
 
   private:
-  std::map<unsigned int, MarekObject> moMap;
+  static int callback(void*, int, char**, char**);
+  sqlite3 *db;
+  char *zErrMsg;
+  int rc;
+  char *sql;
+  std::map<unsigned int, std::string> moMap;
   unsigned int objectIdCounter;
 
 };

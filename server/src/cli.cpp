@@ -7,7 +7,6 @@
 
 #include "cli.h"
 #include <iostream>
-#include "marekObject.h"
 
 using namespace std;
 
@@ -56,6 +55,14 @@ void Cli::readCommand()
   {
     cout << handleCreate(input);
   }
+  else if (input.find("delete") != string::npos)
+  {
+    cout << handleDelete(input);
+  }
+  else if (input.find("set") != string::npos)
+  {
+    cout << handleSet(input);
+  }
   else
   {
     cout << "Unrecognized command, type again\n";
@@ -65,10 +72,13 @@ void Cli::readCommand()
 
 string Cli::handleRead(string command)
 {
-  MarekObject mo = dataBasePtr->getMO(command.substr(4));
-  if (mo.getObjectId())
+  void* mo = dataBasePtr->getMO(command.substr(4));
+  if (mo)
   {
-    return mo.getMoName();
+    //temp hack
+    string result = *(string*)mo + "\n";
+    delete (string*)mo;
+    return result;
   }
   else
   {
@@ -78,14 +88,38 @@ string Cli::handleRead(string command)
 
 string Cli::handleCreate(string command)
 {
-  MarekObject mo(command.substr(7), dataBasePtr->getNextObjectId());
+  string mo = command.substr(7);
   //here should be transactionHandler call
-  if (dataBasePtr->addMO(mo))
+  if (dataBasePtr->addMO(mo, NULL))
   {
     return "ok\n";
   }
   else
   {
     return "cannot create MO\n";
+  }
+}
+
+string Cli::handleDelete(string command)
+{
+  if (dataBasePtr->deleteMO(command.substr(7)))
+  {
+    return "ok\n";
+  }
+  else
+  {
+    return "cannot delete MO\n";
+  }
+}
+
+string Cli::handleSet(string command)
+{
+  if (dataBasePtr->modifyMO(command.substr(4), NULL))
+  {
+    return "ok\n";
+  }
+  else
+  {
+    return "cannot set MO\n";
   }
 }
