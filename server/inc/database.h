@@ -13,25 +13,29 @@
 #include <string>
 #include <sqlite3.h>
 
+#define CREATE_MO_TABLE "CREATE TABLE MO("\
+	                "ID INT PRIMARY KEY NOT NULL," \
+	                "NAME           TEXT NOT NULL," \
+	                "VAL            INT);"
+
 class DataBase: public DataBaseIf
 {
   public:
   DataBase();
   virtual ~DataBase();
 
-  bool addMO(std::string, void*);
-  bool modifyMO(std::string, void*);
-  bool deleteMO(std::string);
-  void* getMO(std::string);
+  bool addMO(std::vector<std::string>&);
+  bool modifyMO(std::vector<std::string>&);
+  bool deleteMO(std::vector<std::string>&);
+  std::vector<std::string> getMO(std::vector<std::string>&);
 
   private:
   static int callback(void*, int, char**, char**);
   sqlite3 *db;
   char *zErrMsg;
   int rc;
-  char *sql;
-  std::map<unsigned int, std::string> moMap;
   unsigned int objectIdCounter;
+  static std::vector<std::string> readData;
 
 };
 

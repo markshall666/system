@@ -8,6 +8,10 @@
 #include "database.h"
 #include "trace.h"
 #include <stdio.h>
+#include <sstream>
+#include <vector>
+
+std::vector<std::string> DataBase::readData;
 
 DataBase::DataBase()
 :zErrMsg(0),objectIdCounter(0)
@@ -21,14 +25,7 @@ DataBase::DataBase()
   {
     TRACE_DEBUG("Opened database successfully\n");
 
-    /* Create SQL statement */
-    sql = "CREATE TABLE MO("\
-	  "ID INT PRIMARY KEY     NOT NULL," \
-	  "NAME           TEXT    NOT NULL," \
-	  "ATTR1          INT);";
-
-    /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
+    rc = sqlite3_exec(db, CREATE_MO_TABLE, callback, 0, &zErrMsg);
     if( rc != SQLITE_OK )
     {
     TRACE_ERROR("SQL error: %s\n", zErrMsg);
@@ -46,64 +43,78 @@ DataBase::~DataBase()
   sqlite3_close(db);
 }
 
-bool DataBase::addMO(std::string name, void* attr)
+bool DataBase::addMO(std::vector<std::string>& attr)
 {
-  moMap.insert(std::pair<unsigned int, std::string>(objectIdCounter, name));
-  ++objectIdCounter;
   /* Create SQL statement */
-  sql = "INSERT INTO MO (ID,NAME,ATTR1) "  \
-        "VALUES (1, 'kotek', 666);";
+  std::stringstream sql;
+  sql << "INSERT INTO MO (ID,NAME,VAL) VALUES (" << objectIdCounter << ", '" << attr[1] << "', ";
+  if (attr.size() > 2)
+  {
+    sql << attr[3] << ");";
+  }
+  else
+  {
+    sql << "0);";
+  }
 
-  rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
     TRACE_ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
+    return false;
   }
-  else
+
+  ++objectIdCounter;
+  return true;
+}
+
+bool DataBase::modifyMO(std::vector<std::string>& attr)
+{
+  /* Create SQL statement */
+  std::stringstream sql;
+  sql << "UPDATE MO set " << attr[2] << " = " << attr[3] << " WHERE NAME='" << attr[1] << "';";
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if( rc != SQLITE_OK )
   {
-    TRACE_DEBUG("Record created successfully\n");
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+    return false;
   }
 
   return true;
 }
 
-bool DataBase::modifyMO(std::string name, void* attr)
+bool DataBase::deleteMO(std::vector<std::string>& attr)
 {
-  for (std::map<unsigned int, std::string>::iterator it = moMap.begin(); it != moMap.end(); ++it)
+  /* Create SQL statement */
+  std::stringstream sql;
+  sql << "DELETE FROM MO WHERE NAME='" << attr[1] << "';";
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if( rc != SQLITE_OK )
   {
-    if (it->second.compare(name) == 0)
-    {
-      return true;
-    }
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+    return false;
   }
-  return false;
+
+  return true;
 }
 
-bool DataBase::deleteMO(std::string name)
+std::vector<std::string> DataBase::getMO(std::vector<std::string>& attr)
 {
-  for (std::map<unsigned int, std::string>::iterator it = moMap.begin(); it != moMap.end(); ++it)
+  readData.clear();
+  /* Create SQL statement */
+  std::stringstream sql;
+  sql << "SELECT * FROM MO WHERE NAME='" << attr[1] << "';";
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if( rc != SQLITE_OK )
   {
-    if (it->second.compare(name) == 0)
-    {
-      moMap.erase(it);
-      return true;
-    }
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
   }
-  return false;
-}
 
-void* DataBase::getMO(std::string name)
-{
-  for (std::map<unsigned int, std::string>::iterator it = moMap.begin(); it != moMap.end(); ++it)
-  {
-    TRACE_DEBUG("iterating '%s', '%s'", it->second.c_str(), name.c_str());
-    if (it->second.compare(name) == 0)
-    {
-      return (void*)new std::string(name);
-    }
-  }
-  return NULL;
+  return readData;
 }
 
 int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
@@ -111,8 +122,12 @@ int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
   int i;
   for(i=0; i<argc; i++)
   {
-    printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    TRACE_DEBUG("%s = %s", azColName[i], argv[i] ? argv[i] : "NULL");
+    if (strcmp(azColName[i], "ID") && strcmp(azColName[i], "NAME"))
+    {
+      readData.push_back(azColName[i]);
+      readData.push_back(argv[i]);
+    }
   }
-  printf("\n");
   return 0;
 }

@@ -7,6 +7,9 @@
 
 #include "cli.h"
 #include <iostream>
+#include <sstream>
+#include <vector>
+#include "trace.h"
 
 using namespace std;
 
@@ -46,39 +49,54 @@ void Cli::printMenu()
 void Cli::readCommand()
 {
   string input;
+  vector<string> arg;
+  string errorMsg;
   getline(cin, input);
-  if (input.find("get") != string::npos)
+
+  switch (validateAndTokenizeInput(input, arg, errorMsg))
   {
-    cout << handleRead(input);
-  }
-  else if (input.find("create") != string::npos)
-  {
-    cout << handleCreate(input);
-  }
-  else if (input.find("delete") != string::npos)
-  {
-    cout << handleDelete(input);
-  }
-  else if (input.find("set") != string::npos)
-  {
-    cout << handleSet(input);
-  }
-  else
-  {
-    cout << "Unrecognized command, type again\n";
-    printMenu();
+    case GET:
+    {
+      cout << handleRead(arg);
+      break;
+    }
+    case CREATE:
+    {
+      cout << handleCreate(arg);
+      break;
+    }
+    case DEL:
+    {
+      cout << handleDelete(arg);
+      break;
+    }
+    case SET:
+    {
+      cout << handleSet(arg);
+      break;
+    }
+    case UNKNOWN:
+    {
+      if (errorMsg.empty())
+      {
+        cout << "Unrecognized command, type again\n";
+      }
+      else
+      {
+        cout << errorMsg.c_str() << "\n";
+      }
+      printMenu();
+      break;
+    }
   }
 }
 
-string Cli::handleRead(string command)
+string Cli::handleRead(vector<string>& attr)
 {
-  void* mo = dataBasePtr->getMO(command.substr(4));
-  if (mo)
+  vector<string> result = dataBasePtr->getMO(attr);
+  if (!result.empty())
   {
-    //temp hack
-    string result = *(string*)mo + "\n";
-    delete (string*)mo;
-    return result;
+    return result[0] + " " + result[1] + "\n";
   }
   else
   {
@@ -86,11 +104,10 @@ string Cli::handleRead(string command)
   }
 }
 
-string Cli::handleCreate(string command)
+string Cli::handleCreate(vector<string>& attr)
 {
-  string mo = command.substr(7);
   //here should be transactionHandler call
-  if (dataBasePtr->addMO(mo, NULL))
+  if (dataBasePtr->addMO(attr))
   {
     return "ok\n";
   }
@@ -100,9 +117,9 @@ string Cli::handleCreate(string command)
   }
 }
 
-string Cli::handleDelete(string command)
+string Cli::handleDelete(vector<string>& attr)
 {
-  if (dataBasePtr->deleteMO(command.substr(7)))
+  if (dataBasePtr->deleteMO(attr))
   {
     return "ok\n";
   }
@@ -112,9 +129,9 @@ string Cli::handleDelete(string command)
   }
 }
 
-string Cli::handleSet(string command)
+string Cli::handleSet(vector<string>& attr)
 {
-  if (dataBasePtr->modifyMO(command.substr(4), NULL))
+  if (dataBasePtr->modifyMO(attr))
   {
     return "ok\n";
   }
@@ -122,4 +139,48 @@ string Cli::handleSet(string command)
   {
     return "cannot set MO\n";
   }
+}
+
+Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, string& errorMsg)
+{
+  operation op = UNKNOWN;
+  string buf;
+  stringstream ss(in);
+  while (ss >> buf) out.push_back(buf);
+
+  if (out.size() >= 2)
+  {
+    if (out[0].find("get") != string::npos)
+    {
+      op = GET;
+    }
+    else if (out[0].find("create") != string::npos)
+    {
+      op = CREATE;
+    }
+    else if (out[0].find("delete") != string::npos)
+    {
+      op = DEL;
+    }
+    else if (out[0].find("set") != string::npos)
+    {
+      op = SET;
+    }
+    else
+    {
+      op = UNKNOWN;
+    }
+  }
+  else
+  {
+    errorMsg = "Too few arguments";
+  }
+
+  if (op == SET && out.size() != 4)
+  {
+    errorMsg = "Too few arguments";
+    op = UNKNOWN;
+  }
+
+  return op;
 }

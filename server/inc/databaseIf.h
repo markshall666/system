@@ -9,6 +9,7 @@
 #define DATABASEIF_H_
 
 #include <string>
+#include <vector>
 
 /*
  * DataBase abstract interface to make possible stub.
@@ -19,10 +20,10 @@ class DataBaseIf
   virtual ~DataBaseIf()
   {}
 
-  virtual bool addMO(std::string, void*) = 0;
-  virtual bool modifyMO(std::string, void*) = 0;
-  virtual bool deleteMO(std::string) = 0;
-  virtual void* getMO(std::string) = 0;
+  virtual bool addMO(std::vector<std::string>&) = 0;
+  virtual bool modifyMO(std::vector<std::string>&) = 0;
+  virtual bool deleteMO(std::vector<std::string>&) = 0;
+  virtual std::vector<std::string> getMO(std::vector<std::string>&) = 0;
 };
 
 
