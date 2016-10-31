@@ -43,6 +43,7 @@ void Cli::printMenu()
   cout << "create <MO name> create MO\n";
   cout << "delete <MO name> delete MO\n";
   cout << "set <MO name> <attribute> <value> set attribute in MO\n";
+  cout << "print <MO name> print MO(s)\n";
   cout << "Enter command:\n";
 }
 
@@ -75,6 +76,11 @@ void Cli::readCommand()
       cout << handleSet(arg);
       break;
     }
+    case PRINT:
+    {
+      cout << handlePrint(arg);
+      break;
+    }
     case UNKNOWN:
     {
       if (errorMsg.empty())
@@ -96,7 +102,7 @@ string Cli::handleRead(vector<string>& attr)
   vector<string> result = dataBasePtr->getMO(attr);
   if (!result.empty())
   {
-    return result[0] + " " + result[1] + "\n";
+    return attr[1] + " " + result[0] + " = " + result[1] + "\n";
   }
   else
   {
@@ -107,25 +113,42 @@ string Cli::handleRead(vector<string>& attr)
 string Cli::handleCreate(vector<string>& attr)
 {
   //here should be transactionHandler call
-  if (dataBasePtr->addMO(attr))
+  string errorStr;
+  if (validateMO(attr, errorStr))
   {
-    return "ok\n";
+    int objectId = dataBasePtr->getMaxId();
+    if (dataBasePtr->addMO(attr, objectId + 1))
+    {
+      return "ok\n";
+    }
+    else
+    {
+      return "cannot create MO\n";
+    }
   }
   else
   {
-    return "cannot create MO\n";
+    return errorStr;
   }
 }
 
 string Cli::handleDelete(vector<string>& attr)
 {
-  if (dataBasePtr->deleteMO(attr))
+  vector<string> result = dataBasePtr->printMO(attr);
+  if (!result.empty())
   {
-    return "ok\n";
+    if (dataBasePtr->deleteMO(attr))
+    {
+      return "ok\n";
+    }
+    else
+    {
+      return "cannot delete MO\n";
+    }
   }
   else
   {
-    return "cannot delete MO\n";
+    return "no such MO\n";
   }
 }
 
@@ -139,6 +162,17 @@ string Cli::handleSet(vector<string>& attr)
   {
     return "cannot set MO\n";
   }
+}
+
+string Cli::handlePrint(vector<string>& attr)
+{
+  vector<string> result = dataBasePtr->printMO(attr);
+  stringstream ss;
+  for (unsigned i = 0; i < result.size(); ++i)
+  {
+    ss << result[i] << "\n";
+  }
+  return ss.str();
 }
 
 Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, string& errorMsg)
@@ -166,10 +200,18 @@ Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, st
     {
       op = SET;
     }
+    else if (out[0].find("print") != string::npos)
+    {
+      op = PRINT;
+    }
     else
     {
       op = UNKNOWN;
     }
+  }
+  else if (out.size() > 0 && out[0].find("print") != string::npos)
+  {
+    op = PRINT;
   }
   else
   {
@@ -183,4 +225,24 @@ Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, st
   }
 
   return op;
+}
+
+bool Cli::validateMO(vector<string>& in, string& errorStr)
+{
+  //temp hardcoded checking MO type
+  if (in[1].find("kotek=") == string::npos)
+  {
+    errorStr = "Wrong MO type!\n";
+    return false;
+  }
+  vector<string> result = dataBasePtr->printMO(in);
+  if (result.empty())
+  {
+    return true;
+  }
+  else
+  {
+    errorStr = "MO " + in[1] + " already exist!\n";
+    return false;
+  }
 }

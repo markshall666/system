@@ -23,7 +23,8 @@ class Cli
     CREATE,
     DEL,
     SET,
-    UNKNOWN};
+    UNKNOWN,
+    PRINT};
 
   void start();
 
@@ -35,7 +36,9 @@ class Cli
   std::string handleCreate(std::vector<std::string>&);
   std::string handleDelete(std::vector<std::string>&);
   std::string handleSet(std::vector<std::string>&);
+  std::string handlePrint(std::vector<std::string>&);
   operation validateAndTokenizeInput(std::string&, std::vector<std::string>&, std::string&);
+  bool validateMO(std::vector<std::string>&, std::string&);
 
   TransactionHandler* transactionHandlerPtr;
   DataBaseIf* dataBasePtr;

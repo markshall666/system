@@ -20,10 +20,12 @@ class DataBaseIf
   virtual ~DataBaseIf()
   {}
 
-  virtual bool addMO(std::vector<std::string>&) = 0;
+  virtual bool addMO(std::vector<std::string>&, int) = 0;
   virtual bool modifyMO(std::vector<std::string>&) = 0;
   virtual bool deleteMO(std::vector<std::string>&) = 0;
   virtual std::vector<std::string> getMO(std::vector<std::string>&) = 0;
+  virtual std::vector<std::string> printMO(std::vector<std::string>&) = 0;
+  virtual int getMaxId() = 0;
 };
 
 

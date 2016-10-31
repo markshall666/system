@@ -24,10 +24,17 @@ class DataBase: public DataBaseIf
   DataBase();
   virtual ~DataBase();
 
-  bool addMO(std::vector<std::string>&);
+  bool addMO(std::vector<std::string>&, int);
   bool modifyMO(std::vector<std::string>&);
   bool deleteMO(std::vector<std::string>&);
   std::vector<std::string> getMO(std::vector<std::string>&);
+  std::vector<std::string> printMO(std::vector<std::string>&);
+  int getMaxId();
+
+  enum operation{
+    GET,
+    PRINT,
+    ID};
 
   private:
   static int callback(void*, int, char**, char**);
@@ -36,6 +43,7 @@ class DataBase: public DataBaseIf
   int rc;
   unsigned int objectIdCounter;
   static std::vector<std::string> readData;
+  static operation op;
 
 };
 
