@@ -25,7 +25,7 @@ class DataBaseIf
   virtual bool deleteMO(std::vector<std::string>&) = 0;
   virtual std::vector<std::string> getMO(std::vector<std::string>&) = 0;
   virtual std::vector<std::string> printMO(std::vector<std::string>&) = 0;
-  virtual int getMaxId() = 0;
+  virtual unsigned getMaxId() = 0;
 };
 
 

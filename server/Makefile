@@ -4,7 +4,7 @@ OBJECTS=server.o marekObject.o database.o communicationHandler.o transactionHand
 OUT=tranServer
 EXTLIB=-L. ../itc/itc.so.1.0.1
 CC=g++
-CFLAGS=-Wall -pthread -l sqlite3
+CFLAGS=-Wall -pthread -l sqlite3 -g
 
 server:
 	$(CC) -c $(SDIR) $(INC) $(CFLAGS)

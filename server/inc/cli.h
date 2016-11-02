@@ -39,6 +39,7 @@ class Cli
   std::string handlePrint(std::vector<std::string>&);
   operation validateAndTokenizeInput(std::string&, std::vector<std::string>&, std::string&);
   bool validateMO(std::vector<std::string>&, std::string&);
+  void handleDefaults(std::vector<std::string>&);
 
   TransactionHandler* transactionHandlerPtr;
   DataBaseIf* dataBasePtr;

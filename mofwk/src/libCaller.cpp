@@ -77,9 +77,40 @@ int LibCaller::getEventDescriptor()
 
 bool LibCaller::dispatch()
 {
-    union itcMsg* msg = receiveData();
-    TRACE_MSG(msg);
-    bool result = objMap[1]->onCall(msg->dispatchApp.message);
-    itcFree(msg);
-    return result;
+  bool result;
+  union itcMsg* msg = receiveData();
+  TRACE_MSG(msg);
+  switch (msg->msgNo)
+  {
+    case CREATE_MO_REQ:
+    {
+      result = objMap[1]->onCall(msg->createMoReq.moName);
+      itcFree(msg);
+      msg = itcAlloc(sizeof(CreateMoCfmS), CREATE_MO_CFM);
+      sendData(TRAN_SERVER, msg);
+      break;
+    }
+    case COMPLETED_MO_REQ:
+    {
+      result = objMap[1]->onCall(msg->completedMoReq.moName);
+      itcFree(msg);
+      msg = itcAlloc(sizeof(CompletedMoCfmS), COMPLETED_MO_CFM);
+      sendData(TRAN_SERVER, msg);
+      break;
+    }
+    case APPLY_MO_REQ:
+    {
+      result = objMap[1]->onCall(msg->applyMoReq.moName);
+      itcFree(msg);
+      msg = itcAlloc(sizeof(ApplyMoCfmS), APPLY_MO_CFM);
+      sendData(TRAN_SERVER, msg);
+      break;
+    }
+    default:
+    {
+      TRACE_ERROR("Unknown message, msgNo = 0x%x", msg->msgNo);
+    }
+  }
+
+  return result;
 }

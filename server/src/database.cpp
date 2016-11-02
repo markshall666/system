@@ -176,7 +176,7 @@ int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
   return 0;
 }
 
-int DataBase::getMaxId()
+unsigned DataBase::getMaxId()
 {
   readData.clear();
   op = ID;

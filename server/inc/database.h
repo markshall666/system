@@ -29,7 +29,7 @@ class DataBase: public DataBaseIf
   bool deleteMO(std::vector<std::string>&);
   std::vector<std::string> getMO(std::vector<std::string>&);
   std::vector<std::string> printMO(std::vector<std::string>&);
-  int getMaxId();
+  unsigned getMaxId();
 
   enum operation{
     GET,

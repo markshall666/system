@@ -20,6 +20,7 @@ int main(int argc, const char** argv)
   TransactionHandler* tranPtr = new TransactionHandler(dataBasePtr);
   std::map<pthread_t, std::string> appMap;
   CommunicationHandler* comHandler = new CommunicationHandler(&appMap, tranPtr);
+  tranPtr->setCommunicationHandlerPtr(comHandler);
   comHandler->init();
   Cli* cliPtr = new Cli(tranPtr, dataBasePtr);
 

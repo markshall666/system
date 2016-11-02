@@ -116,9 +116,11 @@ string Cli::handleCreate(vector<string>& attr)
   string errorStr;
   if (validateMO(attr, errorStr))
   {
-    int objectId = dataBasePtr->getMaxId();
-    if (dataBasePtr->addMO(attr, objectId + 1))
+    handleDefaults(attr);
+    unsigned objectId = dataBasePtr->getMaxId();
+    if (transactionHandlerPtr->handleCreate(objectId, attr))
     {
+      dataBasePtr->addMO(attr, objectId + 1);
       return "ok\n";
     }
     else
@@ -244,5 +246,15 @@ bool Cli::validateMO(vector<string>& in, string& errorStr)
   {
     errorStr = "MO " + in[1] + " already exist!\n";
     return false;
+  }
+}
+
+void Cli::handleDefaults(vector<string>& in)
+{
+  if (in.size() <= 2)
+  {
+    //temp hardcoded values
+    in.push_back("val");
+    in.push_back("0");
   }
 }
