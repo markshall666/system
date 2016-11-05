@@ -112,20 +112,19 @@ string Cli::handleRead(vector<string>& attr)
 
 string Cli::handleCreate(vector<string>& attr)
 {
-  //here should be transactionHandler call
   string errorStr;
   if (validateMO(attr, errorStr))
   {
     handleDefaults(attr);
     unsigned objectId = dataBasePtr->getMaxId();
-    if (transactionHandlerPtr->handleCreate(objectId, attr))
+    if (transactionHandlerPtr->handleCreate(objectId + 1, attr, errorStr))
     {
       dataBasePtr->addMO(attr, objectId + 1);
       return "ok\n";
     }
     else
     {
-      return "cannot create MO\n";
+      return "cannot create MO: " + errorStr + "\n";
     }
   }
   else
@@ -139,13 +138,16 @@ string Cli::handleDelete(vector<string>& attr)
   vector<string> result = dataBasePtr->printMO(attr);
   if (!result.empty())
   {
-    if (dataBasePtr->deleteMO(attr))
+    unsigned objectId = dataBasePtr->getObjectId(attr[1]);
+    string errorStr;
+    if (transactionHandlerPtr->handleDelete(objectId, attr, errorStr))
     {
+      dataBasePtr->deleteMO(attr);
       return "ok\n";
     }
     else
     {
-      return "cannot delete MO\n";
+      return "cannot delete MO: " + errorStr + "\n";
     }
   }
   else
@@ -156,13 +158,24 @@ string Cli::handleDelete(vector<string>& attr)
 
 string Cli::handleSet(vector<string>& attr)
 {
-  if (dataBasePtr->modifyMO(attr))
+  vector<string> result = dataBasePtr->printMO(attr);
+  if (!result.empty())
   {
-    return "ok\n";
+    unsigned objectId = dataBasePtr->getObjectId(attr[1]);
+    string errorStr;
+    if (transactionHandlerPtr->handleModify(objectId, attr, errorStr))
+    {
+      dataBasePtr->modifyMO(attr);
+      return "ok\n";
+    }
+    else
+    {
+      return "cannot set MO: " + errorStr + "\n";
+    }
   }
   else
   {
-    return "cannot set MO\n";
+    return "no such MO\n";
   }
 }
 

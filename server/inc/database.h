@@ -30,10 +30,12 @@ class DataBase: public DataBaseIf
   std::vector<std::string> getMO(std::vector<std::string>&);
   std::vector<std::string> printMO(std::vector<std::string>&);
   unsigned getMaxId();
+  unsigned getObjectId(std::string&);
 
   enum operation{
     GET,
     PRINT,
+    MAXID,
     ID};
 
   private:

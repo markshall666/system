@@ -95,6 +95,8 @@ bool LibCaller::dispatch()
       result = objMap[1]->onCall(msg->completedMoReq.moName);
       itcFree(msg);
       msg = itcAlloc(sizeof(CompletedMoCfmS), COMPLETED_MO_CFM);
+      //msg = itcAlloc(sizeof(CompletedMoRejS), COMPLETED_MO_REJ);
+      //strcpy(msg->completedMoRej.error, "dupa");
       sendData(TRAN_SERVER, msg);
       break;
     }

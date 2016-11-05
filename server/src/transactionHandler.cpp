@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "transactionHandler.h"
 #include "communicationHandler.h"
 #include "trace.h"
@@ -17,57 +18,376 @@ using namespace std;
 TransactionHandler::TransactionHandler(DataBaseIf* dataBasePtrIn):
 comPtr(NULL),
 txState(IDLE),
-ongoingTxId(0)
+requestedTxState(IDLE),
+ongoingTxId(0),
+txData(NULL),
+objectId(0),
+txResult(false)
 {
   dataBasePtr = dataBasePtrIn;
   srand(time(NULL));
+
+  pthread_t tId;
+  pthread_create(&tId, NULL, startLoop, (void*)this);
+  TRACE_DEBUG("Starting transaction thread, tId = 0x%x", (unsigned int)tId);
 }
 
 TransactionHandler::~TransactionHandler()
 {}
 
-bool TransactionHandler::handleCreate(unsigned objectId, vector<string>& mo)
+void* TransactionHandler::startLoop(void* ptr)
 {
-  startTransaction();
-  txState = CREATE;
-  comPtr->triggerEvent(ongoingTxId, CREATE, objectId, (void*)&mo);
-  if (wait())
+  TransactionHandler* objectPtr = (TransactionHandler*)ptr;
+  objectPtr->mainLoop();
+  return NULL;
+}
+
+void TransactionHandler::mainLoop()
+{
+  while(1)
   {
-    comPtr->triggerEvent(ongoingTxId, COMPLETE, objectId, (void*)&mo);
-    if (wait())
+    while(txState == requestedTxState);
+    switch (requestedTxState)
     {
-      comPtr->triggerEvent(ongoingTxId, APPLY, objectId, (void*)&mo);
-      if (wait())
+      case CREATE:
       {
-        return true;
-      }
-      else
-      {
+        startTransaction();
+	txState = CREATE;
+	TRACE_DEBUG("TxState = CREATE");
+	comPtr->triggerEvent(ongoingTxId, CREATE, objectId, (void*)txData);
+	if (waitTimeOut())
+        {
+          switch (requestedTxState)
+          {
+            case COMPLETE:
+            {
+              txState = COMPLETE;
+              TRACE_DEBUG("TxState = COMPLETE");
+              comPtr->triggerEvent(ongoingTxId, COMPLETE, objectId, (void*)txData);
+              if (waitTimeOut())
+              {
+                switch (requestedTxState)
+                {
+                  case APPLY:
+                  {
+                    txState = APPLY;
+                    TRACE_DEBUG("TxState = APPLY");
+                    comPtr->triggerEvent(ongoingTxId, APPLY, objectId, (void*)txData);
+                    if (waitTimeOut())
+                    {
+                      switch (requestedTxState)
+                      {
+                	case IDLE:
+                        {
+                          txResult = true;
+                          break;
+                        }
+                	default:
+                        {
+                          TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+                          txResult = true;
+                        }
+                      }
+                    }
+                    else
+                    {
+                      TRACE_ERROR("Transaction timeout in state %s", getTxStateString(txState));
+                    }
+                    break;
+                  }
+                  case ABORT:
+                  {
+                    txState = ABORT;
+                    TRACE_DEBUG("TxState = ABORT");
+                    comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+                    break;
+                  }
+                  default:
+                  {
+                    TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+                    break;
+                  }
+                }
+              }
+              else
+              {
+                TRACE_ERROR("Transaction timeout in state %s, aborting", getTxStateString(txState));
+                txState = ABORT;
+                comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+              }
+              break;
+            }
+            case ABORT:
+            {
+              txState = ABORT;
+              TRACE_DEBUG("TxState = ABORT");
+              comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+              break;
+            }
+            default:
+            {
+              TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+              break;
+            }
+          }
+        }
+	else
+        {
+          TRACE_ERROR("Transaction timeout in state %s, aborting", getTxStateString(txState));
+          txState = ABORT;
+          comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+        }
         txState = IDLE;
-        return true;
+        requestedTxState = IDLE;
+        ongoingTxId = 0;
+        TRACE_DEBUG("TxState = IDLE");
+        break;
+      }
+      case MODIFY:
+      {
+        startTransaction();
+      	txState = MODIFY;
+      	TRACE_DEBUG("TxState = MODIFY");
+      	comPtr->triggerEvent(ongoingTxId, MODIFY, objectId, (void*)txData);
+      	if (waitTimeOut())
+        {
+	  switch (requestedTxState)
+	  {
+	    case COMPLETE:
+	    {
+	      txState = COMPLETE;
+	      TRACE_DEBUG("TxState = COMPLETE");
+	      comPtr->triggerEvent(ongoingTxId, COMPLETE, objectId, (void*)txData);
+	      if (waitTimeOut())
+	      {
+		switch (requestedTxState)
+		{
+		  case APPLY:
+		  {
+		    txState = APPLY;
+		    TRACE_DEBUG("TxState = APPLY");
+		    comPtr->triggerEvent(ongoingTxId, APPLY, objectId, (void*)txData);
+		    if (waitTimeOut())
+		    {
+		      switch (requestedTxState)
+		      {
+		        case IDLE:
+			{
+			  txResult = true;
+			  break;
+			}
+		        default:
+			{
+			  TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+			  txResult = true;
+			}
+		      }
+		    }
+		    else
+		    {
+		      TRACE_ERROR("Transaction timeout in state %s", getTxStateString(txState));
+		    }
+		    break;
+		  }
+		  case ABORT:
+		  {
+		    txState = ABORT;
+		    TRACE_DEBUG("TxState = ABORT");
+		    comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+		    break;
+		  }
+		  default:
+		  {
+		    TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+		    break;
+		  }
+		}
+	      }
+	      else
+	      {
+		TRACE_ERROR("Transaction timeout in state %s, aborting", getTxStateString(txState));
+		txState = ABORT;
+		comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+	      }
+	      break;
+	    }
+	    case ABORT:
+	    {
+	      txState = ABORT;
+	      TRACE_DEBUG("TxState = ABORT");
+	      comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+	      break;
+	    }
+	    default:
+	    {
+	      TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+	      break;
+	    }
+	  }
+	}
+      	else
+        {
+	  TRACE_ERROR("Transaction timeout in state %s, aborting", getTxStateString(txState));
+	  txState = ABORT;
+	  comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+	}
+	txState = IDLE;
+	requestedTxState = IDLE;
+	ongoingTxId = 0;
+	TRACE_DEBUG("TxState = IDLE");
+	break;
+      }
+      case DELETE:
+      {
+        startTransaction();
+      	txState = DELETE;
+      	TRACE_DEBUG("TxState = DELETE");
+      	comPtr->triggerEvent(ongoingTxId, DELETE, objectId, (void*)txData);
+      	if (waitTimeOut())
+	{
+	  switch (requestedTxState)
+	  {
+	    case COMPLETE:
+	    {
+	      txState = COMPLETE;
+	      TRACE_DEBUG("TxState = COMPLETE");
+	      comPtr->triggerEvent(ongoingTxId, COMPLETE, objectId, (void*)txData);
+	      if (waitTimeOut())
+	      {
+		switch (requestedTxState)
+		{
+		  case APPLY:
+		  {
+		    txState = APPLY;
+		    TRACE_DEBUG("TxState = APPLY");
+		    comPtr->triggerEvent(ongoingTxId, APPLY, objectId, (void*)txData);
+		    if (waitTimeOut())
+		    {
+		      switch (requestedTxState)
+		      {
+		        case IDLE:
+			{
+			  txResult = true;
+			  break;
+			}
+		        default:
+			{
+			  TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+			  txResult = true;
+			}
+		      }
+		    }
+		    else
+		    {
+		      TRACE_ERROR("Transaction timeout in state %s", getTxStateString(txState));
+		    }
+		    break;
+		  }
+		  case ABORT:
+		  {
+		    txState = ABORT;
+		    TRACE_DEBUG("TxState = ABORT");
+		    comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+		    break;
+		  }
+		  default:
+		  {
+		    TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+		    break;
+		  }
+		}
+	      }
+	      else
+	      {
+		TRACE_ERROR("Transaction timeout in state %s, aborting", getTxStateString(txState));
+		txState = ABORT;
+		comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+	      }
+	      break;
+	    }
+	    case ABORT:
+	    {
+	      txState = ABORT;
+	      TRACE_DEBUG("TxState = ABORT");
+	      comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+	      break;
+	    }
+	    default:
+	    {
+	      TRACE_ERROR("Unsupported state: %s", getTxStateString(requestedTxState));
+	      break;
+	    }
+	  }
+	}
+      	else
+	{
+	  TRACE_ERROR("Transaction timeout in state %s, aborting", getTxStateString(txState));
+	  txState = ABORT;
+	  comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)txData);
+	}
+	txState = IDLE;
+	requestedTxState = IDLE;
+	ongoingTxId = 0;
+	TRACE_DEBUG("TxState = IDLE");
+	break;
+      }
+      default:
+      {
+	TRACE_ERROR("Unsupported yet state: %s", getTxStateString(requestedTxState));
       }
     }
-    else
-    {
-      comPtr->triggerEvent(ongoingTxId, ABORT, objectId, NULL);
-      return false;
-    }
+  }
+}
+
+bool TransactionHandler::handleCreate(unsigned inObjectId, vector<string>& mo, string& inErrorStr)
+{
+  objectId = inObjectId;
+  txData = &mo;
+  requestedTxState = CREATE;
+  if (waitTransactionEnd())
+  {
+    inErrorStr = errorStr;
+    return txResult;
   }
   else
   {
-    comPtr->triggerEvent(ongoingTxId, ABORT, objectId, (void*)&mo);
+    errorStr = "Transaction timed out\n";
     return false;
   }
 }
 
-bool TransactionHandler::handleModify(std::string name, void* attr)
+bool TransactionHandler::handleModify(unsigned inObjectId, vector<string>& mo, string& inErrorStr)
 {
-  return true;
+  objectId = inObjectId;
+  txData = &mo;
+  requestedTxState = MODIFY;
+  if (waitTransactionEnd())
+  {
+    inErrorStr = errorStr;
+    return txResult;
+  }
+  else
+  {
+    errorStr = "Transaction timed out\n";
+    return false;
+  }
 }
 
-bool TransactionHandler::handleDelete(std::string name)
+bool TransactionHandler::handleDelete(unsigned inObjectId, vector<string>& mo, string& inErrorStr)
 {
-  return true;
+  objectId = inObjectId;
+  txData = &mo;
+  requestedTxState = DELETE;
+  if (waitTransactionEnd())
+  {
+    inErrorStr = errorStr;
+    return txResult;
+  }
+  else
+  {
+    errorStr = "Transaction timed out\n";
+    return false;
+  }
 }
 
 void TransactionHandler::setCommunicationHandlerPtr(CommunicationHandler* inPtr)
@@ -78,189 +398,15 @@ void TransactionHandler::setCommunicationHandlerPtr(CommunicationHandler* inPtr)
 void TransactionHandler::startTransaction()
 {
   ongoingTxId = rand() % 100;
+  txResult = false;
   TRACE_DEBUG("Transaction started, txId = %d", ongoingTxId);
 }
 
-void TransactionHandler::changeState(transactionState state, void* data)
+bool TransactionHandler::waitTimeOut()
 {
-  switch (txState)
-  {
-    case IDLE:
-    {
-      switch (state)
-      {
-	case CREATE:
-	{
-	  TRACE_DEBUG("state CREATE");
-	  //txState = CREATE;
-
-	  //handle create
-	  break;
-	}
-	case MODIFY:
-	{
-	  txState = MODIFY;
-	  //handle modify
-	  break;
-	}
-	case DELETE:
-	{
-	  txState = DELETE;
-	  //handle delete
-	  break;
-	}
-	default:
-	{
-	  //wrong state
-	  break;
-	}
-      }
-      break;
-    }
-    case CREATE:
-    {
-      switch (state)
-      {
-      	case COMPLETE:
-      	{
-      	  txState = COMPLETE;
-      	  TRACE_DEBUG("state COMPLETE");
-      	  //handle complete
-      	  break;
-      	}
-      	case ABORT:
-      	{
-      	  txState = ABORT;
-      	  //handle abort
-      	  break;
-      	}
-	default:
-	{
-	  //wrong state
-	  break;
-	}
-      }
-      break;
-    }
-    case MODIFY:
-    {
-      switch (state)
-      {
-	case COMPLETE:
-	{
-	  txState = COMPLETE;
-	  //handle complete
-	  break;
-	}
-	case ABORT:
-	{
-	  txState = ABORT;
-	  //handle abort
-	  break;
-	}
-	default:
-	{
-	  //wrong state
-	  break;
-	}
-      }
-      break;
-    }
-    case DELETE:
-    {
-      switch (state)
-      {
-	case COMPLETE:
-	{
-	  txState = COMPLETE;
-	  //handle complete
-	  break;
-	}
-	case ABORT:
-	{
-	  txState = ABORT;
-	  //handle abort
-	  break;
-	}
-	default:
-	{
-	  //wrong state
-	  break;
-	}
-      }
-      break;
-    }
-    case COMPLETE:
-    {
-      switch (state)
-      {
-	case APPLY:
-	{
-	  txState = APPLY;
-	  TRACE_DEBUG("state APPLY");
-	  //handle apply
-	  break;
-	}
-	case ABORT:
-	{
-	  txState = ABORT;
-	  //handle abort
-	  break;
-	}
-	default:
-	{
-	  //wrong state
-	  break;
-	}
-      }
-      break;
-    }
-    case APPLY:
-    {
-      switch (state)
-      {
-	case IDLE:
-	{
-	  txState = IDLE;
-	  TRACE_DEBUG("state IDLE");
-	  //handle idle
-	  break;
-	}
-	default:
-	{
-	  //wrong state
-	  break;
-	}
-      }
-      break;
-    }
-    case ABORT:
-    {
-      switch (state)
-      {
-    	case IDLE:
-    	{
-    	txState = IDLE;
-    	  //handle idle
-    	  break;
-    	}
-    	default:
-    	{
-    	  //wrong state
-    	  break;
-    	}
-      }
-      break;
-    }
-  }
-}
-
-bool TransactionHandler::wait()
-{
-  transactionState tempTxstate = txState;
   for (unsigned i = 0; i < 10000; ++i)
   {
-    if (tempTxstate != txState)
+    if (requestedTxState != txState)
     {
       return true;
     }
@@ -269,7 +415,46 @@ bool TransactionHandler::wait()
   return false;
 }
 
-void TransactionHandler::setTransactionState(transactionState state)
+bool TransactionHandler::waitTransactionEnd()
 {
-  txState = state;
+  unsigned i = 0;
+  while (i < 30000)
+  {
+    if (txState != IDLE) break;
+    usleep(1000);
+    ++i;
+  }
+  while (i < 30000)
+  {
+    if (txState == IDLE) return true;
+    usleep(1000);
+    ++i;
+  }
+  return false;
+}
+
+void TransactionHandler::requestChangeState(transactionState state)
+{
+  requestedTxState = state;
+}
+
+void TransactionHandler::setErrorStr(const char* error)
+{
+  errorStr.clear();
+  errorStr = error;
+}
+
+const char* TransactionHandler::getTxStateString(transactionState state)
+{
+  switch (state)
+  {
+    case IDLE: return "IDLE";
+    case CREATE: return "CREATE";
+    case MODIFY: return "MODIFY";
+    case DELETE: return "DELETE";
+    case ABORT: return "ABORT";
+    case COMPLETE: return "COMPLETE";
+    case APPLY: return "APPLY";
+  }
+  return "UNKNOWN";
 }

@@ -134,35 +134,36 @@ void CommunicationHandler::handleCreateMoCfm(union itcMsg* msgIn)
 {
   TRACE_ENTER;
   itcFree(msgIn);
-  tranHandlerPtr->setTransactionState(TransactionHandler::COMPLETE);
+  tranHandlerPtr->requestChangeState(TransactionHandler::COMPLETE);
 }
 
 void CommunicationHandler::handleCreateMoRej(union itcMsg* msgIn)
 {
   TRACE_ENTER;
+  tranHandlerPtr->requestChangeState(TransactionHandler::ABORT);
   itcFree(msgIn);
-  tranHandlerPtr->setTransactionState(TransactionHandler::ABORT);
 }
 
 void CommunicationHandler::handleCompletedMoCfm(union itcMsg* msgIn)
 {
   TRACE_ENTER;
   itcFree(msgIn);
-  tranHandlerPtr->setTransactionState(TransactionHandler::APPLY);
+  tranHandlerPtr->requestChangeState(TransactionHandler::APPLY);
 }
 
 void CommunicationHandler::handleCompletedMoRej(union itcMsg* msgIn)
 {
   TRACE_ENTER;
+  tranHandlerPtr->setErrorStr(msgIn->completedMoRej.error);
+  tranHandlerPtr->requestChangeState(TransactionHandler::ABORT);
   itcFree(msgIn);
-  tranHandlerPtr->setTransactionState(TransactionHandler::ABORT);
 }
 
 void CommunicationHandler::handleApplyMoCfm(union itcMsg* msgIn)
 {
   TRACE_ENTER;
   itcFree(msgIn);
-  tranHandlerPtr->setTransactionState(TransactionHandler::IDLE);
+  tranHandlerPtr->requestChangeState(TransactionHandler::IDLE);
 }
 
 void CommunicationHandler::handleEvent()

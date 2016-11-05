@@ -154,7 +154,7 @@ int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
     switch (op)
     {
       case GET:
-      case ID:
+      case MAXID:
       {
 	if (strcmp(azColName[i], "ID") && strcmp(azColName[i], "NAME"))
 	{
@@ -171,6 +171,14 @@ int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
         }
         break;
       }
+      case ID:
+      {
+        if (!strcmp(azColName[i], "ID"))
+        {
+          readData.push_back(argv[i]);
+        }
+        break;
+      }
     }
   }
   return 0;
@@ -179,7 +187,7 @@ int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
 unsigned DataBase::getMaxId()
 {
   readData.clear();
-  op = ID;
+  op = MAXID;
   /* Create SQL statement */
   std::stringstream sql;
   sql << "SELECT MAX(ID) from MO;";
@@ -191,4 +199,21 @@ unsigned DataBase::getMaxId()
   }
 
   return readData[1] != "NULL" ? atoi(readData[1].c_str()) : 0;
+}
+
+unsigned DataBase::getObjectId(std::string& mo)
+{
+  readData.clear();
+  op = ID;
+  /* Create SQL statement */
+  std::stringstream sql;
+  sql << "SELECT ID from MO WHERE NAME='" << mo << "';";
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if( rc != SQLITE_OK )
+  {
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+  }
+
+  return readData[0] != "" ? atoi(readData[0].c_str()) : 0;
 }
