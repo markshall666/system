@@ -20,13 +20,13 @@ class DataBaseIf
   virtual ~DataBaseIf()
   {}
 
-  virtual bool addMO(std::vector<std::string>&, int) = 0;
-  virtual bool modifyMO(std::vector<std::string>&) = 0;
-  virtual bool deleteMO(std::vector<std::string>&) = 0;
-  virtual std::vector<std::string> getMO(std::vector<std::string>&) = 0;
-  virtual std::vector<std::string> printMO(std::vector<std::string>&) = 0;
+  virtual bool addMO(unsigned, unsigned, std::string&, std::vector<std::string>&, std::vector<std::string>&) = 0;
+  virtual bool modifyMO(unsigned, unsigned, std::string&, std::vector<std::string>&, std::vector<std::string>&) = 0;
+  virtual bool deleteMO(unsigned, unsigned, std::string&) = 0;
+  virtual bool getMO(std::string&, std::vector<std::string>&) = 0;
+  virtual bool printMO(std::string&, std::vector<std::string>&) = 0;
   virtual unsigned getMaxId() = 0;
-  virtual unsigned getObjectId(std::string&) = 0;
+  virtual unsigned getObjectId(unsigned, std::string&) = 0;
 };
 
 

@@ -13,10 +13,9 @@
 #include <string>
 #include <sqlite3.h>
 
-#define CREATE_MO_TABLE "CREATE TABLE MO("\
-	                "ID INT PRIMARY KEY NOT NULL," \
-	                "NAME           TEXT NOT NULL," \
-	                "VAL            INT);"
+#define DB_NAME "mo.db"
+#define MO_TYPES_TABLE "mo_types"
+#define MO_LIST_TABLE "mo_list"
 
 class DataBase: public DataBaseIf
 {
@@ -24,31 +23,22 @@ class DataBase: public DataBaseIf
   DataBase();
   virtual ~DataBase();
 
-  bool addMO(std::vector<std::string>&, int);
-  bool modifyMO(std::vector<std::string>&);
-  bool deleteMO(std::vector<std::string>&);
-  std::vector<std::string> getMO(std::vector<std::string>&);
-  std::vector<std::string> printMO(std::vector<std::string>&);
+  bool addMO(unsigned, unsigned, std::string&, std::vector<std::string>&, std::vector<std::string>&);
+  bool modifyMO(unsigned, unsigned, std::string&, std::vector<std::string>&, std::vector<std::string>&);
+  bool deleteMO(unsigned, unsigned, std::string&);
+  bool getMO(std::string&, std::vector<std::string>&);
+  bool printMO(std::string&, std::vector<std::string>&);
   unsigned getMaxId();
-  unsigned getObjectId(std::string&);
-
-  enum operation{
-    GET,
-    PRINT,
-    MAXID,
-    ID};
+  unsigned getObjectId(unsigned, std::string&);
 
   private:
   static int callback(void*, int, char**, char**);
+  bool getTypeTable(unsigned, std::string&);
   sqlite3 *db;
   char *zErrMsg;
   int rc;
-  unsigned int objectIdCounter;
   static std::vector<std::string> readData;
-  static operation op;
 
 };
-
-
 
 #endif /* DATABASE_H_ */

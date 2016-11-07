@@ -99,7 +99,7 @@ void Cli::readCommand()
 
 string Cli::handleRead(vector<string>& attr)
 {
-  vector<string> result = dataBasePtr->getMO(attr);
+  /*vector<string> result = dataBasePtr->getMO(attr);
   if (!result.empty())
   {
     return attr[1] + " " + result[0] + " = " + result[1] + "\n";
@@ -107,7 +107,8 @@ string Cli::handleRead(vector<string>& attr)
   else
   {
     return "no such MO\n";
-  }
+  }*/
+  return "ok\n";
 }
 
 string Cli::handleCreate(vector<string>& attr)
@@ -119,7 +120,11 @@ string Cli::handleCreate(vector<string>& attr)
     unsigned objectId = dataBasePtr->getMaxId();
     if (transactionHandlerPtr->handleCreate(objectId + 1, attr, errorStr))
     {
-      dataBasePtr->addMO(attr, objectId + 1);
+      //temporary hardcoded
+      vector<string> a, b;
+      a.push_back("attr1");
+      b.push_back("666");
+      dataBasePtr->addMO(objectId + 1, 0x77700001, attr[1], a, b);
       return "ok\n";
     }
     else
@@ -135,14 +140,15 @@ string Cli::handleCreate(vector<string>& attr)
 
 string Cli::handleDelete(vector<string>& attr)
 {
-  vector<string> result = dataBasePtr->printMO(attr);
+  vector<string> result;
+  dataBasePtr->printMO(attr[1], result);
   if (!result.empty())
   {
-    unsigned objectId = dataBasePtr->getObjectId(attr[1]);
+    unsigned objectId = dataBasePtr->getObjectId(0x77700001, attr[1]);
     string errorStr;
     if (transactionHandlerPtr->handleDelete(objectId, attr, errorStr))
     {
-      dataBasePtr->deleteMO(attr);
+      dataBasePtr->deleteMO(objectId, 0x77700001, attr[1]);
       return "ok\n";
     }
     else
@@ -158,7 +164,7 @@ string Cli::handleDelete(vector<string>& attr)
 
 string Cli::handleSet(vector<string>& attr)
 {
-  vector<string> result = dataBasePtr->printMO(attr);
+  /*vector<string> result = dataBasePtr->printMO(attr);
   if (!result.empty())
   {
     unsigned objectId = dataBasePtr->getObjectId(attr[1]);
@@ -176,18 +182,27 @@ string Cli::handleSet(vector<string>& attr)
   else
   {
     return "no such MO\n";
-  }
+  }*/
+  vector<string> a, b;
+  a.push_back("attr1");
+  a.push_back("attr2");
+  b.push_back("777");
+  b.push_back("888");
+  string name("miau");
+  dataBasePtr->modifyMO(1, 2003828737, name, a, b);
+  return "ok\n";
 }
 
 string Cli::handlePrint(vector<string>& attr)
 {
-  vector<string> result = dataBasePtr->printMO(attr);
+  /*vector<string> result = dataBasePtr->printMO(attr);
   stringstream ss;
   for (unsigned i = 0; i < result.size(); ++i)
   {
     ss << result[i] << "\n";
   }
-  return ss.str();
+  return ss.str();*/
+  return "ok\n";
 }
 
 Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, string& errorMsg)
@@ -250,7 +265,8 @@ bool Cli::validateMO(vector<string>& in, string& errorStr)
     errorStr = "Wrong MO type!\n";
     return false;
   }
-  vector<string> result = dataBasePtr->printMO(in);
+  return true;
+  /*vector<string> result = dataBasePtr->printMO(in);
   if (result.empty())
   {
     return true;
@@ -259,7 +275,7 @@ bool Cli::validateMO(vector<string>& in, string& errorStr)
   {
     errorStr = "MO " + in[1] + " already exist!\n";
     return false;
-  }
+  }*/
 }
 
 void Cli::handleDefaults(vector<string>& in)

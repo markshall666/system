@@ -8,35 +8,25 @@
 #include "database.h"
 #include "trace.h"
 #include <stdio.h>
-#include <sstream>
 #include <vector>
+#include <sstream>
 #include <stdlib.h>
 
-std::vector<std::string> DataBase::readData;
-DataBase::operation DataBase::op;
+using namespace std;
+
+vector<string> DataBase::readData;
 
 DataBase::DataBase()
-:zErrMsg(0),objectIdCounter(0)
+:zErrMsg(0)
 {
-  rc = sqlite3_open("mo.db", &db);
-  if( rc )
+  rc = sqlite3_open(DB_NAME, &db);
+  if(!rc)
   {
-    TRACE_ERROR("Can't open database: %s\n", sqlite3_errmsg(db));
+    TRACE_DEBUG("Opened database successfully\n");
   }
   else
   {
-    TRACE_DEBUG("Opened database successfully\n");
-
-    rc = sqlite3_exec(db, CREATE_MO_TABLE, callback, 0, &zErrMsg);
-    if( rc != SQLITE_OK )
-    {
-    TRACE_ERROR("SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-    }
-    else
-    {
-      TRACE_DEBUG("Table created successfully\n");
-    }
+    TRACE_ERROR("Can't open database: %s\n", sqlite3_errmsg(db));
   }
 }
 
@@ -45,22 +35,43 @@ DataBase::~DataBase()
   sqlite3_close(db);
 }
 
-bool DataBase::addMO(std::vector<std::string>& attr, int objectId)
+bool DataBase::addMO(unsigned objectId, unsigned type, string& name, vector<string>& attrNames, vector<string>& attrValues)
 {
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "INSERT INTO MO (ID,NAME,VAL) VALUES (" << objectId << ", '" << attr[1] << "', ";
-  if (attr.size() > 2)
+  /* find mo_type */
+  string table;
+  if (!getTypeTable(type, table))
   {
-    sql << attr[3] << ");";
+    return false;
   }
-  else
+
+  /* add mo to proper type table */
+  stringstream sql;
+  sql << "insert into " << table << "(id,name";
+  for (vector<string>::iterator it = attrNames.begin(); it != attrNames.end(); ++it)
   {
-    sql << "0);";
+    sql << "," << *it;
   }
+  sql << ")values(" << objectId << ",'" << name << "'";
+  for (vector<string>::iterator it = attrValues.begin(); it != attrValues.end(); ++it)
+  {
+    sql << ",'" << *it << "'";
+  }
+  sql << ");";
   TRACE_DEBUG("addMO sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
-  if( rc != SQLITE_OK )
+  if(rc != SQLITE_OK)
+  {
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+    return false;
+  }
+
+  /*add mo to mo_list */
+  sql.str("");
+  sql << "insert into " << MO_LIST_TABLE << "(id,type,name)values(" << objectId << "," << type << ",'" << name << "');";
+  TRACE_DEBUG("addMO sql: %s", sql.str().c_str());
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if(rc != SQLITE_OK)
   {
     TRACE_ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
@@ -70,11 +81,25 @@ bool DataBase::addMO(std::vector<std::string>& attr, int objectId)
   return true;
 }
 
-bool DataBase::modifyMO(std::vector<std::string>& attr)
+bool DataBase::modifyMO(unsigned objectId, unsigned type, string& name, vector<string>& attrNames, vector<string>& attrValues)
 {
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "UPDATE MO set " << attr[2] << " = " << attr[3] << " WHERE NAME='" << attr[1] << "';";
+  /* find mo_type */
+  string table;
+  if (!getTypeTable(type, table))
+  {
+    return false;
+  }
+
+  /* modify mo */
+  stringstream sql;
+  sql << "update " << table << " set ";
+  for (unsigned i = 0; i < attrNames.size(); ++i)
+  {
+    sql << attrNames[i] << "='" << attrValues[i] << "'";
+    if (i + 1 < attrNames.size()) sql << ",";
+  }
+  sql << "where name='" << name << "';";
+  TRACE_DEBUG("modifyMO sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
@@ -86,11 +111,18 @@ bool DataBase::modifyMO(std::vector<std::string>& attr)
   return true;
 }
 
-bool DataBase::deleteMO(std::vector<std::string>& attr)
+bool DataBase::deleteMO(unsigned objectId, unsigned type, string& name)
 {
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "DELETE FROM MO WHERE NAME='" << attr[1] << "';";
+  /* find mo_type */
+  string table;
+  if (!getTypeTable(type, table))
+  {
+    return false;
+  }
+
+  /* delete from type table */
+  stringstream sql;
+  sql << "delete from " << table << " where name='" << name << "';";
   TRACE_DEBUG("deleteMO sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
@@ -100,97 +132,74 @@ bool DataBase::deleteMO(std::vector<std::string>& attr)
     return false;
   }
 
+  /* delete from mo_list table */
+  sql.str("");
+  sql << "delete from " << MO_LIST_TABLE << " where name='" << name << "';";
+  TRACE_DEBUG("deleteMO sql: %s", sql.str().c_str());
+  if( rc != SQLITE_OK )
+  {
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+    return false;
+  }
+
   return true;
 }
 
-std::vector<std::string> DataBase::getMO(std::vector<std::string>& attr)
+bool DataBase::getMO(string& name, vector<string>& out)
 {
-  readData.clear();
-  op = GET;
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "SELECT * FROM MO WHERE NAME='" << attr[1] << "';";
+  /* find type in mo_list table */
+  stringstream sql;
+  sql << "select type from " << MO_LIST_TABLE << " where name='" << name << "';";
+  TRACE_DEBUG("getMO sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
     TRACE_ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
+    return false;
   }
 
-  return readData;
-}
-
-std::vector<std::string> DataBase::printMO(std::vector<std::string>& attr)
-{
-  readData.clear();
-  op = PRINT;
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "SELECT NAME FROM MO";
-  if (attr.size() > 1)
-  {
-    sql << " WHERE NAME LIKE '" << attr[1] << "%';";
-  }
-  else
-  {
-    sql << ";";
-  }
+  /* find mo in proper type table */
+  sql.str("");
+  sql << "select * from " << readData.front() << " where name='" << name << "';";
+  TRACE_DEBUG("getMO sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
     TRACE_ERROR("SQL error: %s\n", zErrMsg);
     sqlite3_free(zErrMsg);
+    return false;
   }
 
-  return readData;
+  out = readData;
+  return true;
 }
 
-int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
+bool DataBase::printMO(string& name, vector<string>& out)
 {
-  int i;
-  for(i=0; i<argc; i++)
+  /* find all matching mo */
+  std::stringstream sql;
+  sql << "select name from " << MO_LIST_TABLE << " where name like '" << name << "%';";
+  TRACE_DEBUG("printMO sql: %s", sql.str().c_str());
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if( rc != SQLITE_OK )
   {
-    TRACE_DEBUG("%s = %s", azColName[i], argv[i] ? argv[i] : "NULL");
-    switch (op)
-    {
-      case GET:
-      case MAXID:
-      {
-	if (strcmp(azColName[i], "ID") && strcmp(azColName[i], "NAME"))
-	{
-	  readData.push_back(azColName[i]);
-	  readData.push_back(argv[i] ? argv[i] : "NULL");
-	}
-	break;
-      }
-      case PRINT:
-      {
-        if (!strcmp(azColName[i], "NAME"))
-        {
-          readData.push_back(argv[i]);
-        }
-        break;
-      }
-      case ID:
-      {
-        if (!strcmp(azColName[i], "ID"))
-        {
-          readData.push_back(argv[i]);
-        }
-        break;
-      }
-    }
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+    return false;
   }
-  return 0;
+
+  out = readData;
+  return true;
 }
 
 unsigned DataBase::getMaxId()
 {
-  readData.clear();
-  op = MAXID;
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "SELECT MAX(ID) from MO;";
+  /* find max id in mo_list table */
+  stringstream sql;
+  sql << "select MAX(id) from " << MO_LIST_TABLE << ";";
+  TRACE_DEBUG("getMaxId sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
@@ -198,16 +207,15 @@ unsigned DataBase::getMaxId()
     sqlite3_free(zErrMsg);
   }
 
-  return readData[1] != "NULL" ? atoi(readData[1].c_str()) : 0;
+  return !readData.empty() && readData.front() != "" ? atoi(readData.front().c_str()) : 0;
 }
 
-unsigned DataBase::getObjectId(std::string& mo)
+unsigned DataBase::getObjectId(unsigned type, std::string& name)
 {
-  readData.clear();
-  op = ID;
-  /* Create SQL statement */
-  std::stringstream sql;
-  sql << "SELECT ID from MO WHERE NAME='" << mo << "';";
+  /* find id in mo_list table */
+  stringstream sql;
+  sql << "select id from " << MO_LIST_TABLE << " where name='" << name << "';";
+  TRACE_DEBUG("getObjectId sql: %s", sql.str().c_str());
   rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
@@ -215,5 +223,35 @@ unsigned DataBase::getObjectId(std::string& mo)
     sqlite3_free(zErrMsg);
   }
 
-  return readData[0] != "" ? atoi(readData[0].c_str()) : 0;
+  return !readData.empty() && readData.front() != "" ? atoi(readData.front().c_str()) : 0;
+}
+
+bool DataBase::getTypeTable(unsigned type, std::string& table)
+{
+  /* find mo_type */
+  stringstream sql;
+  sql << "select name from " << MO_TYPES_TABLE << " where type=" << type;
+  TRACE_DEBUG("getTypeTable sql: %s", sql.str().c_str());
+  rc = sqlite3_exec(db, sql.str().c_str(), callback, 0, &zErrMsg);
+  if(rc != SQLITE_OK)
+  {
+    TRACE_ERROR("SQL error: %s\n", zErrMsg);
+    sqlite3_free(zErrMsg);
+    return false;
+  }
+
+  table = readData.front();
+  return true;
+}
+
+int DataBase::callback(void *NotUsed, int argc, char **argv, char **azColName)
+{
+  readData.clear();
+  int i;
+  for(i=0; i<argc; i++)
+  {
+    TRACE_DEBUG("%s = %s", azColName[i], argv[i] ? argv[i] : "NULL");
+    readData.push_back(argv[i] ? argv[i] : "");
+  }
+  return 0;
 }
