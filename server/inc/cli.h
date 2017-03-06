@@ -37,8 +37,8 @@ class Cli
   std::string handleDelete(std::vector<std::string>&);
   std::string handleSet(std::vector<std::string>&);
   std::string handlePrint(std::vector<std::string>&);
-  operation validateAndTokenizeInput(std::string&, std::vector<std::string>&, std::string&);
-  bool validateMO(std::vector<std::string>&, std::string&);
+  operation tokenizeAndCheckOperation(std::string&, std::vector<std::string>&, std::string&);
+  int validateAndCheckType(std::vector<std::string>&, std::string&);
   void handleDefaults(std::vector<std::string>&);
 
   TransactionHandler* transactionHandlerPtr;

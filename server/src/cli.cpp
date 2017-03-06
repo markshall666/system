@@ -10,6 +10,7 @@
 #include <sstream>
 #include <vector>
 #include "trace.h"
+#include "moTypes.h"
 
 using namespace std;
 
@@ -54,7 +55,7 @@ void Cli::readCommand()
   string errorMsg;
   getline(cin, input);
 
-  switch (validateAndTokenizeInput(input, arg, errorMsg))
+  switch (tokenizeAndCheckOperation(input, arg, errorMsg))
   {
     case GET:
     {
@@ -114,27 +115,42 @@ string Cli::handleRead(vector<string>& attr)
 string Cli::handleCreate(vector<string>& attr)
 {
   string errorStr;
-  if (validateMO(attr, errorStr))
+  bool result = true;
+  int type = validateAndCheckType(attr, errorStr);
+  if (type != -1)
   {
-    handleDefaults(attr);
     unsigned objectId = dataBasePtr->getMaxId();
-    if (transactionHandlerPtr->handleCreate(objectId + 1, attr, errorStr))
+    if (transactionHandlerPtr->handleCreate(objectId+1, attr, errorStr))
     {
-      //temporary hardcoded
-      vector<string> a, b;
-      a.push_back("attr1");
-      b.push_back("666");
-      dataBasePtr->addMO(objectId + 1, 0x77700001, attr[1], a, b);
-      return "ok\n";
+      vector<string> attrs, vals;
+      if (attr.size() == 4)
+      {
+	attrs.push_back(attr[2]);
+	vals.push_back(attr[3]);
+	if (!dataBasePtr->addMO(objectId+1, type, attr[1], attrs, vals))
+	{
+	  result = false;
+	}
+      }
     }
     else
     {
-      return "cannot create MO: " + errorStr + "\n";
+      result = false;
     }
   }
   else
   {
-    return errorStr;
+    errorStr = "Wrong MO type!\n";
+    result = false;
+  }
+
+  if (result)
+  {
+    return "ok\n";
+  }
+  else
+  {
+    return "cannot create MO: " + errorStr + "\n";
   }
 }
 
@@ -205,7 +221,7 @@ string Cli::handlePrint(vector<string>& attr)
   return "ok\n";
 }
 
-Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, string& errorMsg)
+Cli::operation Cli::tokenizeAndCheckOperation(string& in, vector<string>& out, string& errorMsg)
 {
   operation op = UNKNOWN;
   string buf;
@@ -248,7 +264,7 @@ Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, st
     errorMsg = "Too few arguments";
   }
 
-  if (op == SET && out.size() != 4)
+  if (op == SET && out.size() < 4)
   {
     errorMsg = "Too few arguments";
     op = UNKNOWN;
@@ -257,15 +273,18 @@ Cli::operation Cli::validateAndTokenizeInput(string& in, vector<string>& out, st
   return op;
 }
 
-bool Cli::validateMO(vector<string>& in, string& errorStr)
+int Cli::validateAndCheckType(vector<string>& in, string& errorStr)
 {
-  //temp hardcoded checking MO type
-  if (in[1].find("kotek=") == string::npos)
+  size_t equal = in[1].find("=");
+  if (equal != string::npos)
   {
-    errorStr = "Wrong MO type!\n";
-    return false;
+    return getMoTypeByName(in[1].substr(0, equal).c_str());
   }
-  return true;
+  else
+  {
+    errorStr = "MO should be named with <type>=<name>\n";
+    return -1;
+  }
   /*vector<string> result = dataBasePtr->printMO(in);
   if (result.empty())
   {
@@ -283,7 +302,7 @@ void Cli::handleDefaults(vector<string>& in)
   if (in.size() <= 2)
   {
     //temp hardcoded values
-    in.push_back("val");
+    in.push_back("attr1");
     in.push_back("0");
   }
 }
