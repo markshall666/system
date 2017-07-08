@@ -124,6 +124,36 @@ typedef struct DispatchAppS
   char message[16];
 } DispatchApp;
 
+#define CHECK_CMD_REQ           0x66600c01
+typedef struct CheckCmdReqS
+{
+  uint32_t msgNo;
+  char cmd[16];
+} CheckCmdReq;
+
+#define CHECK_CMD_RSP           0x66600c02
+typedef struct CheckCmdRspS
+{
+  uint32_t msgNo;
+  uint32_t tId;
+} CheckCmdRsp;
+
+#define CMD_EXECUTE_REQ         0x66600c03
+typedef struct CmdExecuteReqS
+{
+  uint32_t msgNo;
+  char cmd[16];
+  uint32_t argNo;
+  char arg[3][16];
+} CmdExecuteReq;
+
+#define CMD_EXECUTE_RSP         0x66600c04
+typedef struct CmdExecuteRspS
+{
+  uint32_t msgNo;
+  char output[256];
+} CmdExecuteRsp;
+
 union itcMsg
 {
   uint32_t msgNo;
@@ -140,6 +170,10 @@ union itcMsg
   struct CompletedMoRejS completedMoRej;
   struct ApplyMoReqS applyMoReq;
   struct ApplyMoCfmS applyMoCfm;
+  struct CheckCmdReqS checkCmdReq;
+  struct CheckCmdRspS checkCmdRsp;
+  struct CmdExecuteReqS cmdExecuteReq;
+  struct CmdExecuteRspS cmdExecuteRsp;
 };
 
 

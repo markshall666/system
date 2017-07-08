@@ -1,12 +1,11 @@
-INC=-Iinc -I../mofwk/inc -I../common/inc
-SDIR=src/main.cpp src/myCallbackObj.cpp
-OBJECTS=main.o myCallbackObj.o
-OUT=app
-LINKER=-L../mofwk -lmofwk -pthread -L../itc -litc
+INC=-Iinc -I../common/inc -I../itc/inc
+SDIR=src/cmdShell.cpp
+OBJECTS=cmdShell.o
+OUT=cmdShell
+LINKER=-L../itc/ -litc -pthread
 CC=g++
 CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-g++
-CFLAGS=-Wall -Werror
-
+CFLAGS=-Wall -Werror -g
 
 default:
 	$(CC) -c $(SDIR) $(INC) $(CFLAGS)
@@ -18,6 +17,5 @@ arm:
 	$(CCARM) -o $(OUT) $(OBJECTS) $(LINKER)
 	rm -f $(OBJECTS)
 	cp $(OUT) ../
-
 clean:
 	rm -f $(OBJECTS) $(OUT)
