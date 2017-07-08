@@ -26,17 +26,18 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  union itcMsg* msg = itcAlloc(sizeof(CheckCmdReqS), CHECK_CMD_REQ);
-  strcpy(msg->checkCmdReq.cmd, argv[0]);
+  union itcMsg* msg = itcAlloc(sizeof(CmdCheckReqS), CMD_CHECK_REQ);
+  strcpy(msg->cmdCheckReq.cmd, argv[0]);
   if (!sendData(CMD_DAEMON, msg))
   {
     printf("Could not run communication, existing...\n");
+    terminateItc(&itcId);
     return 0;
   }
 
   msg = receiveData();
 
-  uint32_t receiverTid = msg->checkCmdRsp.tId;
+  uint32_t receiverTid = msg->cmdCheckRsp.tId;
   itcFree(msg);
 
   if (receiverTid)
@@ -54,6 +55,7 @@ int main(int argc, char* argv[])
     if (!sendData(receiver, msg))
     {
       printf("Could not run command, existing...\n");
+      terminateItc(&itcId);
       return 0;
     }
 
@@ -65,4 +67,6 @@ int main(int argc, char* argv[])
   {
     printf("No such command receiver, exiting...\n");
   }
+
+  terminateItc(&itcId);
 }

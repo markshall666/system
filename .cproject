@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration buildProperties="" description="" id="0.1923776112" name="Default" parent="org.eclipse.cdt.build.core.prefbase.cfg">
+				<configuration artifactName="system" buildProperties="" description="" id="0.1923776112" name="Default" parent="org.eclipse.cdt.build.core.prefbase.cfg">
 					<folderInfo id="0.1923776112." name="/" resourcePath="">
 						<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.1120329034" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
 							<targetPlatform id="org.eclipse.cdt.build.core.prefbase.toolchain.1120329034.8675207" name=""/>
@@ -25,6 +25,7 @@
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="/usr/lib/syslinux/com32/include/"/>
 									<listOptionValue builtIn="false" value="../usr/include/x86_64-linux-gnu"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.8.4"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.636789080" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>
@@ -46,6 +47,17 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="0.1923776112.662018698" name="cmdAppClient.h" rcbsApplicability="disable" resourcePath="cmdHandler/inc/cmdAppClient.h" toolsToInvoke="org.eclipse.cdt.build.core.settings.holder.1840687085.1369146522">
+						<tool id="org.eclipse.cdt.build.core.settings.holder.1840687085.1369146522" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder.589062247">
+							<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.366497341" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+								<listOptionValue builtIn="false" value="/usr/include"/>
+								<listOptionValue builtIn="false" value="/usr/include/x86_64-linux-gnu"/>
+								<listOptionValue builtIn="false" value="/usr/lib/syslinux/com32/include"/>
+								<listOptionValue builtIn="false" value="/usr/include/c++/4.8.4"/>
+							</option>
+							<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1427499889" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+						</tool>
+					</fileInfo>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
@@ -61,5 +73,9 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Default">
+			<resource resourceType="PROJECT" workspacePath="/system"/>
+		</configuration>
+	</storageModule>
 </cproject>

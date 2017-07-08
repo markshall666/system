@@ -4,6 +4,7 @@ CC=gcc
 CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-gcc
 CFLAGS=-std=c99 -fpic -Wall -Werror
 OUT=libitc.so
+OUTARM=libitcArm.so
 OBJECTS=itc.o itc_internal.o
 LINKER=-shared -pthread
 
@@ -13,7 +14,7 @@ default:
 	rm -f $(OBJECTS)
 arm:
 	$(CCARM) -c $(SDIR) $(INC) $(CFLAGS)
-	$(CCARM) $(LINKER) -o $(OUT) $(OBJECTS)
+	$(CCARM) $(LINKER) -o $(OUTARM) $(OBJECTS)
 	rm -f $(OBJECTS)
 clean:
-	rm -f $(OBJECTS) $(OUT)
+	rm -f $(OBJECTS) $(OUT) $(OUTARM)

@@ -103,6 +103,7 @@ void terminateItc(int* fd)
   }
 
   close(*fd);
+  unlink(thDataPtr->name);
   *fd = 0;
   removeThreadData(thDataPtr);
 }
