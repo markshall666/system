@@ -151,7 +151,7 @@ typedef struct CmdExecuteReqS
 typedef struct CmdExecuteRspS
 {
   uint32_t msgNo;
-  char output[256];
+  char output[];
 } CmdExecuteRsp;
 
 #define CMD_REGISTER_REQ        0x66600c05

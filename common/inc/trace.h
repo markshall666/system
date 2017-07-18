@@ -25,29 +25,33 @@ int trace_enable;
   }                                               \
 }                                                 \
 
-#define TRACE_DEBUG(...){           \
-  if (trace_enable){                \
-    printf(__VA_ARGS__);            \
-    printf("\n");                   \
-  }                                 \
-}                                   \
+#define TRACE_DEBUG(...){               \
+  if (trace_enable){                    \
+    printf("%s:%d ",__FILE__, __LINE__);\
+    printf(__VA_ARGS__);                \
+    printf("\n");                       \
+  }                                     \
+}                                       \
 
-#define TRACE_ERROR(...){           \
-  fprintf(stderr, __VA_ARGS__);     \
-  fprintf(stderr, "\n");            \
+#define TRACE_ERROR(...){             \
+  printf("%s:%d ",__FILE__, __LINE__);\
+  fprintf(stderr, __VA_ARGS__);       \
+  fprintf(stderr, "\n");              \
 }
 
-#define TRACE_PERROR(...){          \
-  perror(__VA_ARGS__);              \
+#define TRACE_PERROR(...){            \
+  printf("%s:%d ",__FILE__, __LINE__);\
+  perror(__VA_ARGS__);                \
 }
 
-#define TRACE_ENTER {               \
-  if (trace_enable){                \
-    printf("Enter ");               \
-    printf(__func__);               \
-    printf("\n");                   \
-  }                                 \
-}                                   \
+#define TRACE_ENTER {                   \
+  if (trace_enable){                    \
+    printf("%s:%d ",__FILE__, __LINE__);\
+    printf("Enter ");                   \
+    printf(__func__);                   \
+    printf("\n");                       \
+  }                                     \
+}                                       \
 
 
 

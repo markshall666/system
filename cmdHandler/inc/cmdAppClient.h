@@ -14,7 +14,7 @@
 
 #define CMD_DAEMON "icmdDaemon"
 #define CMD_SHELL "icmdShell"
-typedef char* (*cmdFunc)(void);
+typedef void (*cmdFunc)(std::string&);
 
 class CmdAppClient
 {
@@ -22,22 +22,24 @@ class CmdAppClient
   CmdAppClient();
   virtual ~CmdAppClient();
 
-  bool registerCmd(std::string cmd, char* (*handler)(void));
+  bool registerCmd(std::string cmd, void (*handler)(std::string&));
   bool start();
 
   enum Choice
   {
+    INIT,
     REGISTER,
     LISTEN,
-    IDLE
+    IDLE,
+    TERMINATE
   };
 
   private:
-  pthread_t tId;
-  int itcId;
+  static pthread_t tId;
+  static int itcId;
   static std::vector<std::pair<std::string, cmdFunc> > cmdList;
   static bool loop;
-  static Choice choice;
+  static std::vector<Choice> state;
 
   static void* mainLoop(void* arg);
 };
