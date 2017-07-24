@@ -48,6 +48,9 @@ int main(int argc, const char** argv)
 	strcpy(shell, dir);
 	strcat(shell, "/");
 	strcat(shell, "cmdShell");
+#ifdef __arm__
+	strcat(shell, "Arm");
+#endif
 	strcpy(link, dir);
 	strcat(link, "/");
 	strcat(link, msg->cmdRegisterReq.cmd);
@@ -58,7 +61,8 @@ int main(int argc, const char** argv)
       }
       else
       {
-        TRACE_ERROR("Command %s already registered", msg->cmdRegisterReq.cmd);
+        cmdList.erase(ret.first);
+        cmdList.insert(std::pair<std::string, unsigned>(msg->cmdRegisterReq.cmd, sender));
       }
     }
     else if (msg->msgNo == CMD_CHECK_REQ)

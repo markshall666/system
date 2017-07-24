@@ -14,7 +14,7 @@
 
 #define CMD_DAEMON "icmdDaemon"
 #define CMD_SHELL "icmdShell"
-typedef void (*cmdFunc)(std::string&);
+typedef void (*cmdFunc)(std::string&, int, char**);
 
 class CmdAppClient
 {
@@ -22,7 +22,7 @@ class CmdAppClient
   CmdAppClient();
   virtual ~CmdAppClient();
 
-  bool registerCmd(std::string cmd, void (*handler)(std::string&));
+  bool registerCmd(std::string cmd, void (*handler)(std::string&, int, char**));
   bool start();
 
   enum Choice

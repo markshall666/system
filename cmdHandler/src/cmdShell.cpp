@@ -44,14 +44,15 @@ int main(int argc, char* argv[])
 
   if (receiverTid)
   {
-    union itcMsg* msg = itcAlloc(sizeof(CmdExecuteReqS), CMD_EXECUTE_REQ);
+    union itcMsg* msg = itcAlloc(sizeof(CmdExecuteReqS) + argc*sizeof(char*) + argc*sizeof(CmdExecuteReqS::cmd), CMD_EXECUTE_REQ);
     strcpy(msg->cmdExecuteReq.cmd, argv[0] + 2);
-    for (int i = 1; i < argc; i++)
+    for (int i = 0; i < argc; i++)
     {
-      strcpy(msg->cmdExecuteReq.arg[i-1], argv[i]);
+      msg->cmdExecuteReq.argv[i] = (char*)msg->cmdExecuteReq.argv + argc * sizeof(char*) + (i * sizeof(CmdExecuteReqS::cmd));
+      strcpy(msg->cmdExecuteReq.argv[i], argv[i]);
     }
-    msg->cmdExecuteReq.argNo = argc - 1;
 
+    msg->cmdExecuteReq.argc = argc;
     char receiver[8];
     sprintf(receiver, "%x", receiverTid);
     if (!sendData(receiver, msg))

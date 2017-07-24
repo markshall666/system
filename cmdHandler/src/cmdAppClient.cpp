@@ -40,7 +40,7 @@ CmdAppClient::~CmdAppClient()
   terminateItc(&temp);
 }
 
-bool CmdAppClient::registerCmd(std::string cmd, void (*handler)(std::string&))
+bool CmdAppClient::registerCmd(std::string cmd, void (*handler)(std::string&, int, char**))
 {
   TRACE_DEBUG("register cmd %s", cmd.c_str());
   cmdList.push_back(std::pair<std::string, cmdFunc>(cmd, handler));
@@ -96,9 +96,15 @@ void* CmdAppClient::mainLoop(void* arg)
         {
           if (strstr(it->first.c_str(), msg->cmdExecuteReq.cmd))
           {
-            itcFree(msg);
             std::string buf;
-            it->second(buf);
+            for (unsigned i =0; i < msg->cmdExecuteReq.argc; i++)
+            {
+              msg->cmdExecuteReq.argv[i] = (char*)msg->cmdExecuteReq.argv +  msg->cmdExecuteReq.argc * sizeof(char*)
+                                           + (i * sizeof(CmdExecuteReqS::cmd));
+            }
+
+            it->second(buf, msg->cmdExecuteReq.argc, msg->cmdExecuteReq.argv);
+            itcFree(msg);
             msg = itcAlloc(sizeof(CmdExecuteRspS) + buf.size(), CMD_EXECUTE_RSP);
             strcpy(msg->cmdExecuteRsp.output, buf.c_str());
     	    if (!sendData(CMD_SHELL, msg))
