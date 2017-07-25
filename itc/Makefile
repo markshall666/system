@@ -1,7 +1,7 @@
 INC=-Iinc -I../inc -I../common/inc
 SDIR=src/itc.c src/itc_internal.c
 CC=gcc
-CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-gcc
+CCARM=arm-linux-gnueabihf-gcc
 CFLAGS=-std=c99 -fpic -Wall -Werror
 OUT=libitc.so
 OUTARM=libitcArm.so

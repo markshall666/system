@@ -1,7 +1,7 @@
 INC=-Iinc -I../itc/inc -I../common/inc
 SDIR=src/libCaller.cpp src/libFactory.cpp
 CC=g++
-CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-g++
+CCARM=arm-linux-gnueabihf-g++
 CFLAGS=-fpic -Wall -Werror
 OBJECTS=libCaller.o libFactory.o
 OUT=libmofwk.so

@@ -2,9 +2,9 @@ INC=-Iinc -I../common/inc -I../itc/inc
 LINKER=-L../itc/ -litc -pthread
 LINKERARM=-L../itc/ -litcArm -pthread
 AR=ar rvs
-ARARM=/opt/cross/bin/arm-unknown-linux-gnueabi-ar rvs
+ARARM=arm-linux-gnueabihf-ar rvs
 CC=g++
-CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-g++
+CCARM=arm-linux-gnueabihf-g++
 CFLAGS=-Wall -Werror -g
 
 SHELLSDIR=src/cmdShell.cpp

@@ -4,7 +4,7 @@ OBJECTS=server.o marekObject.o database.o communicationHandler.o transactionHand
 OUT=tranServer
 LINKER=-L../itc/ -litc -pthread -lsqlite3
 CC=g++
-CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-g++
+CCARM=arm-linux-gnueabihf-g++
 CFLAGS=-Wall -Werror -g
 
 default:

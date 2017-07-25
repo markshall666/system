@@ -41,10 +41,11 @@ int main(int argc, char* argv[])
 
   uint32_t receiverTid = msg->cmdCheckRsp.tId;
   itcFree(msg);
+  msg = NULL;
 
   if (receiverTid)
   {
-    union itcMsg* msg = itcAlloc(sizeof(CmdExecuteReqS) + argc*sizeof(char*) + argc*sizeof(CmdExecuteReqS::cmd), CMD_EXECUTE_REQ);
+    msg = itcAlloc(sizeof(CmdExecuteReqS) + argc*sizeof(char*) + argc*sizeof(CmdExecuteReqS::cmd), CMD_EXECUTE_REQ);
     strcpy(msg->cmdExecuteReq.cmd, argv[0] + 2);
     for (int i = 0; i < argc; i++)
     {

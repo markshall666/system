@@ -4,7 +4,7 @@ OBJECTS=main.o myCallbackObj.o
 OUT=app
 LINKER=-L../mofwk -lmofwk -pthread -L../itc -litc
 CC=g++
-CCARM=/opt/cross/bin/arm-unknown-linux-gnueabi-g++
+CCARM=arm-linux-gnueabihf-g++
 CFLAGS=-Wall -Werror
 
 
