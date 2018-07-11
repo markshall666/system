@@ -9,3 +9,7 @@ default:
 
 clean:
 	rm -f *.o $(OUT) *.gcda *.gcno
+
+test:
+	valgrind ./itcTest
+	gcov ./itcTest
