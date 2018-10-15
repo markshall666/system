@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "itc_internal.h"
 
 struct threadData** threadsData = NULL;
@@ -25,14 +27,14 @@ void storeThreadData(struct threadData* data)
 {
   if (threadsData == NULL)
   {
-    threadsData = (struct threadData**)malloc(sizeof(struct threadData*) * MAX_NO_APP);
-    for (uint32_t i = 0; i < MAX_NO_APP; ++i)
+    threadsData = (struct threadData**)malloc(sizeof(struct threadData*) * MAX_NO_THS);
+    for (uint32_t i = 0; i < MAX_NO_THS; ++i)
     {
       threadsData[i] = NULL;
     }
   }
 
-  for (int i = 0; i < MAX_NO_APP; i++)
+  for (int i = 0; i < MAX_NO_THS; i++)
   {
     if (threadsData[i] == NULL)
     {
@@ -47,7 +49,7 @@ void removeThreadData(struct threadData* data)
 {
   free(data->buf);
   free(data);
-  for (int i = 0; i < MAX_NO_APP; i++)
+  for (int i = 0; i < MAX_NO_THS; i++)
   {
     if (threadsData[i] == data)
     {
@@ -72,7 +74,7 @@ struct threadData* getThreadDataPtr(int sock)
     if (!sock)
     {
       pthread_t currentTId = pthread_self();
-      for (int i = 0; i <= MAX_NO_APP; i++)
+      for (int i = 0; i <= MAX_NO_THS; i++)
       {
 	if (threadsData[i] != NULL && threadsData[i]->tId == currentTId)
 	{
@@ -83,7 +85,7 @@ struct threadData* getThreadDataPtr(int sock)
     }
     else
     {
-      for (int i = 0; i <= MAX_NO_APP; i++)
+      for (int i = 0; i <= MAX_NO_THS; i++)
       {
 	if (threadsData[i] != NULL && threadsData[i]->fd == sock)
 	{
@@ -95,4 +97,22 @@ struct threadData* getThreadDataPtr(int sock)
   }
 
   return ptr;
+}
+
+bool checkName(const char* name)
+{
+  if (threadsData)
+  {
+    for (uint32_t i = 0; i < MAX_NO_THS; ++i)
+    {
+      if (threadsData[i])
+      {
+        if (strcmp(threadsData[i]->name, name) == 0)
+        {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
 }

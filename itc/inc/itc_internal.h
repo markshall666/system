@@ -13,7 +13,7 @@
 
 #define ITC_MAX_MSG_SIZE 1024
 #define ITC_MESSAGE_HEADER 8
-#define MAX_NO_APP 16
+#define MAX_NO_THS 16
 
 extern int noThd;
 
@@ -41,5 +41,7 @@ void storeThreadData(struct threadData* data);
 void removeThreadData(struct threadData* data);
 
 struct threadData* getThreadDataPtr(int sock);
+
+bool checkName(const char* name);
 
 #endif /* ITC_INTERNAL_H_ */

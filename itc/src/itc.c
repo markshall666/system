@@ -13,12 +13,18 @@
 
 bool initItc(const char* name, int* fd)
 {
-  if (noThd == MAX_NO_APP)
+  if (noThd == MAX_NO_THS)
   {
-    TRACE_ERROR("Number of application exceeded");
+    TRACE_ERROR("Max number of threads (%d) exceeded", MAX_NO_THS);
     return false;
   }
   
+  if (!checkName(name))
+  {
+    TRACE_ERROR("Name %s already registered", name);
+    return false;
+  }
+
   struct sockaddr_un server;
   int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (sock < 0) 
