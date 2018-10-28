@@ -12,7 +12,7 @@ class LibCaller
   std::map<int, CallbackObj*> objMap;
   int mapIter;
   char* appName;
-  int itcId;
+  unsigned long int itcId;
   public:
   LibCaller(const char* _appName);
   virtual ~LibCaller();

@@ -15,6 +15,8 @@
 #define ITC_MESSAGE_HEADER 8
 #define MAX_NO_THS 16
 
+typedef pthread_t mboxId;
+
 extern int noThd;
 
 struct internalMsg
@@ -40,7 +42,7 @@ void storeThreadData(struct threadData* data);
 
 void removeThreadData(struct threadData* data);
 
-struct threadData* getThreadDataPtr(int sock);
+struct threadData* getThreadDataPtr(mboxId mbox);
 
 bool checkName(const char* name);
 

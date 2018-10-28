@@ -6,8 +6,6 @@
 #include "itc.h"
 #include "trace.h"
 
-int fd1, fd2, fd3;
-
 #define THREAD_1 0x10000666
 #define THREAD_2 0x10000667
 #define THREAD_3 0x10000668
@@ -27,22 +25,17 @@ static void itcInit(void **state)
 {
   initSetup(0);
 
-  assert_int_equal(initItc("test1", &fd1), 1);
-  assert_int_equal(fd1, 3);
+  assert_int_equal(initItc("test1"), THREAD_1);
 }
 
 static void itcTerminate(void **state)
 {
-  will_return(pthread_self, THREAD_1);
-
-  terminateItc(&fd1);
-  assert_int_equal(fd1, 0);
+  assert_int_equal(terminateItc(THREAD_1), 1);
 }
 
 static void itcTerminateFailed(void **state)
 {
-  terminateItc(&fd1);
-  assert_int_equal(fd1, 0);
+  assert_int_equal(terminateItc(THREAD_1), 0);
 }
 
 static void itcInitFailed1(void **state)
@@ -53,8 +46,7 @@ static void itcInitFailed1(void **state)
 
   will_return(socket, -1);
 
-  assert_int_equal(initItc("test1", &fd1), 0);
-  assert_int_equal(fd1, 0);
+  assert_int_equal(initItc("test1"), 0);
 }
 
 static void itcInitFailed2(void **state)
@@ -66,38 +58,28 @@ static void itcInitFailed2(void **state)
   will_return(socket, 3);
   will_return(bind, 1);
 
-  assert_int_equal(initItc("test1", &fd1), 0);
-  assert_int_equal(fd1, 0);
+  assert_int_equal(initItc("test1"), 0);
 }
 
 static void itcInitMulti(void **state)
 {
   initSetup(0);
 
-  assert_int_equal(initItc("test1", &fd1), 1);
-  assert_int_equal(fd1, 3);
+  assert_int_equal(initItc("test1"), THREAD_1);
 
   initSetup(1);
 
-  assert_int_equal(initItc("test2", &fd2), 1);
-  assert_int_equal(fd2, 4);
+  assert_int_equal(initItc("test2"), THREAD_2);
 
   initSetup(2);
 
-  assert_int_equal(initItc("test3", &fd3), 1);
-  assert_int_equal(fd3, 5);
+  assert_int_equal(initItc("test3"), THREAD_3);
 
-  will_return(pthread_self, THREAD_1);
-  terminateItc(&fd1);
-  assert_int_equal(fd1, 0);
+  assert_int_equal(terminateItc(THREAD_1), 1);
 
-  will_return(pthread_self, THREAD_2);
-  terminateItc(&fd2);
-  assert_int_equal(fd2, 0);
+  assert_int_equal(terminateItc(THREAD_2), 1);
 
-  will_return(pthread_self, THREAD_3);
-  terminateItc(&fd3);
-  assert_int_equal(fd3, 0);
+  assert_int_equal(terminateItc(THREAD_3), 1);
 }
 
 static void itcInitMax(void **state)
@@ -107,15 +89,14 @@ static void itcInitMax(void **state)
     initSetup(i);
     char name[7];
     sprintf(name, "test%d", i);
-    initItc(name, &fd1);
+    initItc(name);
   }
 
-  assert_int_equal(initItc("test", &fd1), 0);
+  assert_int_equal(initItc("test"), 0);
 
   for (int i = 0; i < 16; i++)
   {
-    will_return(pthread_self, i + THREAD_1);
-    terminateItc(&fd1);
+      assert_int_equal(terminateItc(i + THREAD_1), 1);
   }
 }
 
@@ -123,14 +104,11 @@ static void itcInitSameName(void **state)
 {
   initSetup(0);
 
-  assert_int_equal(initItc("test", &fd1), 1);
-  assert_int_equal(fd1, 3);
+  assert_int_equal(initItc("test"), THREAD_1);
 
-  assert_int_equal(initItc("test", &fd2), 0);
+  assert_int_equal(initItc("test"), 0);
 
-  will_return(pthread_self, THREAD_1);
-  terminateItc(&fd1);
-  assert_int_equal(fd1, 0);
+  assert_int_equal(terminateItc(THREAD_1), 1);
 }
 
 static void allocFreeItc(void **state)
@@ -148,13 +126,13 @@ static void allocFreeItc(void **state)
 static void itcSendData(void **state)
 {
   initSetup(0);
-  initItc("test1", &fd1);
+  initItc("test1");
   void* msg = itcAlloc(8, 666);
   uint32_t* msgPtr = msg;
   TRACE_MSG(msg);
 
-  will_return_count(pthread_self, THREAD_1, 3);
-  expect_value(sendto, fd, fd1);
+  will_return_count(pthread_self, THREAD_1, 2);
+  expect_value(sendto, fd, 3);
   expect_value(sendto, buf, msgPtr - 2);
   expect_value(sendto, n, 16);
   expect_value(sendto, flags, 0);
@@ -163,18 +141,18 @@ static void itcSendData(void **state)
   will_return(sendto, 16);
   assert_int_equal(sendData("test2", msg), 1);
 
-  terminateItc(&fd1);
+  assert_int_equal(terminateItc(THREAD_1), 1);
 }
 
 static void itcSendDataFailed1(void **state)
 {
   initSetup(0);
-  initItc("test1", &fd1);
+  initItc("test1");
   void* msg = itcAlloc(8, 666);
   uint32_t* msgPtr = msg;
 
-  will_return_count(pthread_self, THREAD_1, 3);
-  expect_value(sendto, fd, fd1);
+  will_return_count(pthread_self, THREAD_1, 2);
+  expect_value(sendto, fd, 3);
   expect_value(sendto, buf, msgPtr - 2);
   expect_value(sendto, n, 16);
   expect_value(sendto, flags, 0);
@@ -183,7 +161,7 @@ static void itcSendDataFailed1(void **state)
   will_return(sendto, 0);
   assert_int_equal(sendData("test2", msg), 0);
 
-  terminateItc(&fd1);
+  assert_int_equal(terminateItc(THREAD_1), 1);
 }
 
 static void itcSendDataFailed2(void **state)
@@ -195,12 +173,12 @@ static void itcSendDataFailed2(void **state)
 static void itcReceiveData(void **state)
 {
   initSetup(0);
-  initItc("test1", &fd1);
+  initItc("test1");
 
   uint32_t* buf = (uint32_t*)itcAlloc(8, 666);
   *(buf - 1) = THREAD_1;
-  will_return_count(pthread_self, THREAD_1, 2);
-  expect_value(recv, fd, fd1);
+  will_return_count(pthread_self, THREAD_1, 1);
+  expect_value(recv, fd, 3);
   expect_value(recv, n, ITC_MAX_MSG_SIZE);
   will_return(recv_helper, (buf - 2));
   will_return(recv, 16);
@@ -212,7 +190,7 @@ static void itcReceiveData(void **state)
 
   itcFree((void*)buf);
   itcFree((void*)msg);
-  terminateItc(&fd1);
+  assert_int_equal(terminateItc(THREAD_1), 1);
 }
 
 static void itcReceiveDataFailed(void **state)

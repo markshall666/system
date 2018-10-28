@@ -11,18 +11,18 @@
 #include "trace.h"
 
 
-bool initItc(const char* name, int* fd)
+mboxId initItc(const char* name)
 {
   if (noThd == MAX_NO_THS)
   {
     TRACE_ERROR("Max number of threads (%d) exceeded", MAX_NO_THS);
-    return false;
+    return 0;
   }
   
   if (!checkName(name))
   {
     TRACE_ERROR("Name %s already registered", name);
-    return false;
+    return 0;
   }
 
   struct sockaddr_un server;
@@ -30,7 +30,7 @@ bool initItc(const char* name, int* fd)
   if (sock < 0) 
   {
     TRACE_PERROR("opening dgram socket");
-    return false;
+    return 0;
   }
   
   server.sun_family = AF_UNIX;
@@ -39,12 +39,11 @@ bool initItc(const char* name, int* fd)
   if (bind(sock, (struct sockaddr *) &server, sizeof(struct sockaddr_un)))
   {
     TRACE_PERROR("binding dgram socket");
-    return false;   
+    return 0;
   }
 
-  *fd = sock;
   struct threadData* thread = (struct threadData*)malloc(sizeof(struct threadData));
-  thread->fd = *fd;
+  thread->fd = sock;
   thread->tId = pthread_self();
   strcpy(thread->name, name);
   thread->buf = malloc(ITC_MAX_MSG_SIZE);
@@ -53,7 +52,7 @@ bool initItc(const char* name, int* fd)
 
   TRACE_DEBUG("no threads = %d", noThd);
   TRACE_DEBUG("fd = %d, tId = 0x%x, name = %s", thread->fd, (uint32_t)thread->tId, thread->name);
-  return true;
+  return thread->tId;
 }
 
 bool sendData(const char* receiver, union itcMsg* msg)
@@ -82,6 +81,32 @@ bool sendData(const char* receiver, union itcMsg* msg)
   return true;
 }
 
+/*bool sendData2(mboxId receiver, union itcMsg* msg)
+{
+  struct threadData* thDataPtr = getThreadDataPtr(0);
+  if (thDataPtr == NULL)
+  {
+    TRACE_ERROR("failed to send, Itc not initialized");
+    itcFree(msg);
+    return false;
+  }
+  struct internalMsg* msgInt = getInternalMsg(msg);
+  msgInt->senderTId = pthread_self();
+  uint32_t size = msgInt->size + ITC_MESSAGE_HEADER;
+  struct sockaddr_un receiverAddr;
+  receiverAddr.sun_family = AF_UNIX;
+  strcpy(receiverAddr.sun_path, receiver);
+  TRACE_DEBUG("sending message to %s len = %d", receiver, size - ITC_MESSAGE_HEADER);
+  if (sendto(thDataPtr->fd, msgInt, size, 0, (struct sockaddr *) &receiverAddr, sizeof(struct sockaddr_un)) != size)
+  {
+    TRACE_PERROR("failed to send");
+    itcFree(msg);
+    return false;
+  }
+  itcFree(msg);
+  return true;
+}*/
+
 union itcMsg* receiveData()
 {
   struct threadData* thDataPtr = getThreadDataPtr(0);
@@ -99,19 +124,19 @@ union itcMsg* receiveData()
   return (union itcMsg*)&(msgPtr->msgNo);
 }
 
-void terminateItc(int* fd)
+bool terminateItc(mboxId mbox)
 {
-  struct threadData* thDataPtr = getThreadDataPtr(0);
+  struct threadData* thDataPtr = getThreadDataPtr(mbox);
   if (thDataPtr == NULL)
   {
     TRACE_ERROR("failed to terminate, Itc not initialized");
-    return;
+    return false;
   }
 
-  close(*fd);
+  close(thDataPtr->fd);
   unlink(thDataPtr->name);
-  *fd = 0;
   removeThreadData(thDataPtr);
+  return true;
 }
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
@@ -139,4 +164,16 @@ pthread_t getSenderTId(union itcMsg* msg)
 {
   struct internalMsg* intMsg = getInternalMsg(msg);
   return intMsg->senderTId;
+}
+
+int getFileDescriptor(mboxId mbox)
+{
+  struct threadData* thDataPtr = getThreadDataPtr(mbox);
+  if (thDataPtr == NULL)
+  {
+    TRACE_ERROR("mbox not initialized!");
+    return 0;
+  }
+
+  return thDataPtr->fd;
 }

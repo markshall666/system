@@ -32,9 +32,10 @@ bool LibCaller::init()
   printf("Init called\n");
   bool result = false;
 
-  if (!initItc(appName, &itcId))
+  itcId = initItc(appName);
+  if (!itcId)
   {
-	  return false;
+    return false;
   }
 
   union itcMsg* msg = itcAlloc(sizeof(RegisterAppReqS), REGISTER_APP_REQ);
@@ -42,7 +43,7 @@ bool LibCaller::init()
   TRACE_MSG(msg);
   if (!sendData(TRAN_SERVER, msg))
   {
-	  return false;
+    return false;
   }
 
   msg = receiveData();
@@ -61,7 +62,7 @@ void LibCaller::terminate()
 {
   if (itcId)
   {
-    terminateItc(&itcId);
+    terminateItc(itcId);
   }
   for (std::map<int, CallbackObj*>::const_iterator it = objMap.begin(); it != objMap.end(); it++)
   {
@@ -72,7 +73,7 @@ void LibCaller::terminate()
 
 int LibCaller::getEventDescriptor()
 {
-	return itcId;
+	return getFileDescriptor(itcId);
 }
 
 bool LibCaller::dispatch()

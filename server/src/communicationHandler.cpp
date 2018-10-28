@@ -36,16 +36,17 @@ void CommunicationHandler::init()
 void* CommunicationHandler::mainLoop(void* ptr)
 {
   CommunicationHandler* handlerPtr = (CommunicationHandler*)ptr;
-  int fd;
+  mboxId itcId;
   //void* buf = malloc(16);
 
-  if (!initItc(NAME, &fd))
+  itcId = initItc(NAME);
+  if (!itcId)
   {
     return NULL;
   }
 
   struct pollfd fds;
-  fds.fd = fd;
+  fds.fd = getFileDescriptor(itcId);
   fds.events = POLLIN;
 
   while (true)
