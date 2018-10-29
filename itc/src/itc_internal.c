@@ -101,6 +101,11 @@ struct threadData* getThreadDataPtr(mboxId mbox)
 
 bool checkName(const char* name)
 {
+  if (strlen(name) > 31)
+  {
+    return false;
+  }
+
   if (threadsData)
   {
     for (uint32_t i = 0; i < MAX_NO_THS; ++i)

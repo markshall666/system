@@ -8,6 +8,7 @@
 #include "communicationHandler.h"
 #include "pthread.h"
 #include "messages.h"
+#include <messages.pb.h>
 #include "itc.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,9 +38,8 @@ void* CommunicationHandler::mainLoop(void* ptr)
 {
   CommunicationHandler* handlerPtr = (CommunicationHandler*)ptr;
   mboxId itcId;
-  //void* buf = malloc(16);
 
-  itcId = initItc(NAME);
+  itcId = initItc(SERVER_NAME);
   if (!itcId)
   {
     return NULL;
@@ -55,7 +55,6 @@ void* CommunicationHandler::mainLoop(void* ptr)
     if (fds.revents == POLLIN)
     {
       union itcMsg* msg = receiveData();
-      TRACE_MSG(msg);
       switch (msg->msgNo)
       {
 	case REGISTER_APP_REQ:
@@ -110,15 +109,18 @@ void* CommunicationHandler::mainLoop(void* ptr)
 void CommunicationHandler::handleRegisterAppReq(union itcMsg* msgIn)
 {
   TRACE_ENTER;
-  char* client = (char*)malloc(16);
-  strcpy(client, msgIn->registerAppReq.appName);
-  appMapPtr->insert(std::pair<pthread_t, std::string>(getSenderTId(msgIn),client));
+  RegisterAppReqD protoReq;
+  protoReq.ParseFromArray((void*)&msgIn->registerAppReq.data, itcGetProtoSize(msgIn));
+  appMapPtr->insert(std::pair<pthread_t, std::string>(getSenderTId(msgIn),protoReq.appname()));
+
+  RegisterAppCfmD protoCfm;
+  protoCfm.set_appname(protoReq.appname());
+  protoCfm.set_result(true);
+
+  union itcMsg* msg = itcAllocProto(protoCfm.ByteSize(), REGISTER_APP_CFM);
+  protoCfm.SerializeToArray((void*)&msg->registerAppCfm.data, itcGetProtoSize(msg));
+  sendData(protoReq.appname().c_str(), msg);
   itcFree(msgIn);
-  union itcMsg* msg = itcAlloc(sizeof(RegisterAppCfmS), REGISTER_APP_CFM);
-  msg->registerAppCfm.result = true;
-  strcpy(msg->registerAppReq.appName, client);
-  sendData(client, msg);
-  free(client);
 }
 
 void  CommunicationHandler::handleUpdateMoReq(union itcMsg* msgIn)

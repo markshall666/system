@@ -19,9 +19,11 @@ bool sendData2(mboxId receiver, mboxId sender, union itcMsg* msg);
 union itcMsg* receiveData();
 bool terminateItc(mboxId mbox);
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo);
+union itcMsg* itcAllocProto(int32_t protoSize,  uint32_t msgNo);
 void itcFree(union itcMsg* msg);
 pthread_t getSenderTId(union itcMsg* msg);
 int getFileDescriptor(mboxId mbox);
+int itcGetProtoSize(union itcMsg* msg);
 
 #ifdef __cplusplus
 }

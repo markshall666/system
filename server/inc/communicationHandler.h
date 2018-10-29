@@ -13,7 +13,7 @@
 #include <map>
 #include "transactionHandler.h"
 
-#define NAME "configServer"
+#define SERVER_NAME "CONFIG_SERVER_SERVICE"
 
 class CommunicationHandler
 {

@@ -21,7 +21,7 @@ mboxId initItc(const char* name)
   
   if (!checkName(name))
   {
-    TRACE_ERROR("Name %s already registered", name);
+    TRACE_ERROR("Name %s already registered or is too long", name);
     return 0;
   }
 
@@ -71,6 +71,7 @@ bool sendData(const char* receiver, union itcMsg* msg)
   receiverAddr.sun_family = AF_UNIX;
   strcpy(receiverAddr.sun_path, receiver);
   TRACE_DEBUG("sending message to %s len = %d", receiver, size - ITC_MESSAGE_HEADER);
+  TRACE_MSG(msg);
   if (sendto(thDataPtr->fd, msgInt, size, 0, (struct sockaddr *) &receiverAddr, sizeof(struct sockaddr_un)) != size)
   {
     TRACE_PERROR("failed to send");
@@ -121,7 +122,9 @@ union itcMsg* receiveData()
   memcpy(buf, thDataPtr->buf, recBytes);
   struct internalMsg* msgPtr;
   msgPtr = (struct internalMsg*)buf;
-  return (union itcMsg*)&(msgPtr->msgNo);
+  union itcMsg* msg = (union itcMsg*)&(msgPtr->msgNo);
+  TRACE_MSG(msg);
+  return msg;
 }
 
 bool terminateItc(mboxId mbox)
@@ -141,7 +144,7 @@ bool terminateItc(mboxId mbox)
 
 union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
 {
-  struct internalMsg* msgPtr;
+  struct internalMsg* msgPtr = NULL;
   msgPtr = (struct internalMsg*)malloc(bufSize + ITC_MESSAGE_HEADER);
   if (msgPtr == NULL)
   {
@@ -152,6 +155,27 @@ union itcMsg* itcAlloc(size_t bufSize, uint32_t msgNo)
   msgPtr->msgNo = msgNo;
   TRACE_DEBUG("alloc %d bytes", msgPtr->size);
   return (union itcMsg*)&(msgPtr->msgNo);
+}
+
+union itcMsg* itcAllocProto(int32_t protoSize,  uint32_t msgNo)
+{
+  struct internalMsg* msgPtr =  NULL;
+  msgPtr = (struct internalMsg*)malloc(protoSize + 4 + ITC_MESSAGE_HEADER);
+  if (msgPtr == NULL)
+  {
+    TRACE_PERROR("Cannot allocate message");
+  }
+  memset(msgPtr, 0, protoSize + 4 + ITC_MESSAGE_HEADER);
+  msgPtr->size = protoSize + 4;
+  msgPtr->msgNo = msgNo;
+  TRACE_DEBUG("alloc %d bytes", msgPtr->size);
+  return (union itcMsg*)&(msgPtr->msgNo);
+}
+
+int itcGetProtoSize(union itcMsg* msg)
+{
+  struct internalMsg* intMsg = getInternalMsg(msg);
+  return (intMsg->size) - 4;
 }
 
 void itcFree(union itcMsg* msg)
@@ -171,7 +195,7 @@ int getFileDescriptor(mboxId mbox)
   struct threadData* thDataPtr = getThreadDataPtr(mbox);
   if (thDataPtr == NULL)
   {
-    TRACE_ERROR("mbox not initialized!");
+    TRACE_ERROR("getFileDescriptor failed, mbox not initialized!");
     return 0;
   }
 

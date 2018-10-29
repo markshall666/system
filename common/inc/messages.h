@@ -14,15 +14,14 @@
 typedef struct RegisterAppReqS
 {
   uint32_t msgNo;
-  char appName[16];
+  char data;
 } RegisterAppReq;
 
 #define REGISTER_APP_CFM	0x66600002
 typedef struct RegisterAppCfmS
 {
   uint32_t msgNo;
-  char appName[16];
-  bool result;
+  char data;
 } RegisterAppCfm;
 
 #define UPDATE_MO_REQ	        0x66600003

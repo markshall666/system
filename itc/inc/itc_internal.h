@@ -29,7 +29,7 @@ struct internalMsg
 struct threadData
 {
   int fd;
-  char name[16];
+  char name[32];
   pthread_t tId;
   void* buf;
 };

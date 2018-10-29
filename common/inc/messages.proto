@@ -1,0 +1,10 @@
+message RegisterAppReqD
+{
+  required string appName = 1;
+}
+
+message RegisterAppCfmD
+{
+  required string appName = 1;
+  required bool result = 2;
+}

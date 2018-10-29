@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "messages.h"
+#include "messages.pb.h"
 #include "itc.h"
 #include "trace.h"
 
@@ -38,20 +39,23 @@ bool LibCaller::init()
     return false;
   }
 
-  union itcMsg* msg = itcAlloc(sizeof(RegisterAppReqS), REGISTER_APP_REQ);
-  strcpy(msg->registerAppReq.appName, appName);
-  TRACE_MSG(msg);
-  if (!sendData(TRAN_SERVER, msg))
+  RegisterAppReqD protoReq;
+  protoReq.set_appname(appName);
+
+  union itcMsg* msg = itcAllocProto(protoReq.ByteSize(), REGISTER_APP_REQ);
+  protoReq.SerializeToArray((void*)&msg->registerAppReq.data, itcGetProtoSize(msg));
+  if (!sendData(CONFIG_SERVER, msg))
   {
     return false;
   }
 
   msg = receiveData();
-  TRACE_MSG(msg);
 
-  if (msg->registerAppCfm.result)
+  RegisterAppCfmD protoCfm;
+  protoCfm.ParseFromArray((void*)&msg->registerAppCfm.data, itcGetProtoSize(msg));
+  if (protoCfm.result())
   {
-	  result = true;
+    result = true;
   }
   itcFree(msg);
 
@@ -80,7 +84,6 @@ bool LibCaller::dispatch()
 {
   bool result;
   union itcMsg* msg = receiveData();
-  TRACE_MSG(msg);
   switch (msg->msgNo)
   {
     case CREATE_MO_REQ:
@@ -88,7 +91,7 @@ bool LibCaller::dispatch()
       result = objMap[1]->onCall(msg->createMoReq.moName);
       itcFree(msg);
       msg = itcAlloc(sizeof(CreateMoCfmS), CREATE_MO_CFM);
-      sendData(TRAN_SERVER, msg);
+      sendData(CONFIG_SERVER, msg);
       break;
     }
     case COMPLETED_MO_REQ:
@@ -98,7 +101,7 @@ bool LibCaller::dispatch()
       msg = itcAlloc(sizeof(CompletedMoCfmS), COMPLETED_MO_CFM);
       //msg = itcAlloc(sizeof(CompletedMoRejS), COMPLETED_MO_REJ);
       //strcpy(msg->completedMoRej.error, "dupa");
-      sendData(TRAN_SERVER, msg);
+      sendData(CONFIG_SERVER, msg);
       break;
     }
     case APPLY_MO_REQ:
@@ -106,7 +109,7 @@ bool LibCaller::dispatch()
       result = objMap[1]->onCall(msg->applyMoReq.moName);
       itcFree(msg);
       msg = itcAlloc(sizeof(ApplyMoCfmS), APPLY_MO_CFM);
-      sendData(TRAN_SERVER, msg);
+      sendData(CONFIG_SERVER, msg);
       break;
     }
     default:

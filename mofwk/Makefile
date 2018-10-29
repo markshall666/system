@@ -1,11 +1,11 @@
 INC=-Iinc -I../itc/inc -I../common/inc
-SDIR=src/libCaller.cpp src/libFactory.cpp
+SDIR=src/libCaller.cpp src/libFactory.cpp ../common/src/messages.pb.cc
 CC=g++
 CCARM=arm-linux-gnueabihf-g++
 CFLAGS=-fpic -Wall -Werror
-OBJECTS=libCaller.o libFactory.o
+OBJECTS=libCaller.o libFactory.o messages.pb.o
 OUT=libmofwk.so
-LINKER=-shared -pthread -L../itc/ -litc
+LINKER=-shared -pthread -L../itc/ -litc -lprotobuf
 
 default:
 	$(CC) -c $(SDIR) $(INC) $(CFLAGS)
